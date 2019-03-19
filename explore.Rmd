@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(rjson)
+library(corrplot)
+spore <- fread("song_data.csv")
+summary(spore)
+head(spore)
+nrow(spore)
+n_distinct(spore$id)
+```
+We are given a dataset with 2555 distinct songs, each with 13 numerical descriptives.
+```{r}
+numerical_spore = spore[, c("id", "acousticness", "danceability", "duration_ms", "energy", "instrumentalness", "liveness", "loudness", "mode", "speechiness", "tempo", "valence")]
+heatmap(as.matrix(numerical_spore[, -c("id")]), scale = "column") #heatmap test (bad)
+corrmat <- cor(numerical_spore[,-c("id")], method = "pearson", use = "complete.obs")
+corrplot(corrmat, method = "color")
+corrplot(corrmat, method = "number")
+
+```
+
+```{r}
+names(spore)
+df = spore %>%
+  group_by(id) %>%
+  summarise(
+    dance_to_length = danceability/duration_ms,
+    speech_to_acoustics = speechiness/acousticness,
+    energy_to_liveness = energy/liveness,
+    noise = loudness/energy,
+    speed = tempo/duration_ms,
+    valence
+  )
+```
+

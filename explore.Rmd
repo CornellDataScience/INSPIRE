@@ -45,6 +45,19 @@ corrplot(corrmat, method = "number", col = col(200), type = "upper")
 
 ```
 
+Histograms
+```{r}
+hist(numerical_spore$acousticness)
+hist(numerical_spore$danceability)
+hist(numerical_spore$energy)
+hist(numerical_spore$instrumentalness)
+hist(numerical_spore$liveness)
+hist(numerical_spore$loudness)
+hist(numerical_spore$speechiness)
+hist(numerical_spore$tempo)
+
+```
+
 Feature Engineering
 ```{r}
 names(spore)
@@ -76,7 +89,23 @@ sp_km_clust = kmeans(numerical_spore[,2:12], centers = 6, nstart = 100)
 numerical_spore$cluster = sp_km_clust$cluster
 table(numerical_spore$cluster)
 names(daily)
-numerical_spore[numerical_spore$cluster == 1,c("id")]
+numerical_spore[numerical_spore$cluster == 1,]
+
+summary(numerical_spore[numerical_spore$cluster==2,])
+summary(numerical_spore[numerical_spore$cluster==5,])
+
+spr_lng = numerical_spore %>% 
+  gather(key = var, value = x, acousticness:valence) %>%
+  mutate(
+    var = var
+  ) 
+
+spr_lng %>% 
+  group_by(var, cluster) %>%
+  summarise(y = mean(x)) %>%
+  ggplot(aes(cluster, y, color=factor(cluster), group=cluster)) + 
+  geom_point() + geom_bar(stat = "identity") +
+  facet_wrap(~var, scales = "free_y")
 #DifferentID = 3ATAV8kiC5wg7U0eSMHlQp
 ```
 

@@ -9,6 +9,8 @@ library(data.table)
 library(tidyverse)
 library(rjson)
 library(corrplot)
+library(ClusterR)
+
 spore <- fread("song_data.csv")
 summary(spore)
 head(spore)
@@ -36,12 +38,14 @@ cor.mtest <- function(mat, ...) {
   colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
   p.mat
 }
+p.mat <- cor.mtest(corrmat)
 col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
 corrplot(corrmat, method = "color")
 corrplot(corrmat, method = "number", col = col(200), type = "upper")
 
 ```
 
+Feature Engineering
 ```{r}
 names(spore)
 df = spore %>%
@@ -54,5 +58,25 @@ df = spore %>%
     speed = tempo/duration_ms,
     valence
   )
+```
+
+Clustering
+```{r}
+set.seed(123)
+clustdf <- df[,2:7]
+k.max <- 15
+wss <- sapply(1:k.max, 
+              function(k){kmeans(numerical_spore[,2:12], k, nstart=50,iter.max = 15 )$tot.withinss})
+wss
+plot(1:k.max, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+sp_km_clust = kmeans(numerical_spore[,2:12], centers = 6, nstart = 100)
+numerical_spore$cluster = sp_km_clust$cluster
+table(numerical_spore$cluster)
+names(daily)
+numerical_spore[numerical_spore$cluster == 1,c("id")]
+#DifferentID = 3ATAV8kiC5wg7U0eSMHlQp
 ```
 

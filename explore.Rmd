@@ -10,6 +10,7 @@ library(tidyverse)
 library(rjson)
 library(corrplot)
 library(ClusterR)
+library(factoextra)
 
 spore <- fread("song_data.csv")
 summary(spore)
@@ -22,6 +23,11 @@ We are given a dataset with 2555 distinct songs, each with 13 numerical descript
 numerical_spore = spore[, c("id", "acousticness", "danceability", "duration_ms", "energy", "instrumentalness", "liveness", "loudness", "mode", "speechiness", "tempo", "valence")]
 heatmap(as.matrix(numerical_spore[, -c("id")]), scale = "column") #heatmap test (bad)
 corrmat <- cor(numerical_spore[,-c("id")], method = "pearson", use = "complete.obs")
+#Normalization
+numerical_spore$tempo <- numerical_spore$tempo/max(numerical_spore$tempo)
+numerical_spore$loudness <- numerical_spore$loudness/min(numerical_spore$loudness)
+#Drop outlier
+numerical_spore <- numerical_spore[numerical_spore$id != "3ATAV8kiC5wg7U0eSMHlQp",]
 
 #Calculate matrix p values
 cor.mtest <- function(mat, ...) {
@@ -87,6 +93,10 @@ plot(1:k.max, wss,
      ylab="Total within-clusters sum of squares")
 sp_km_clust = kmeans(numerical_spore[,2:12], centers = 6, nstart = 100)
 numerical_spore$cluster = sp_km_clust$cluster
+distance <- get_dist(numerical_spore[2:12])
+fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+#clusplot(numerical_spore[2:12], numerical_spore$cluster)
+
 table(numerical_spore$cluster)
 names(daily)
 numerical_spore[numerical_spore$cluster == 1,]

@@ -11,6 +11,7 @@ library(rjson)
 library(corrplot)
 library(ClusterR)
 library(factoextra)
+library(mclust)
 
 spore <- fread("song_data.csv")
 summary(spore)
@@ -82,27 +83,31 @@ df = spore %>%
 Clustering
 ```{r}
 set.seed(123)
-clustdf <- df[,2:7]
 k.max <- 15
 wss <- sapply(1:k.max, 
-              function(k){kmeans(numerical_spore[,2:12], k, nstart=50,iter.max = 15 )$tot.withinss})
+              function(k){kmeans(numerical_spore[,c(2:3, 5:12)], k, nstart=50,iter.max = 15 )$tot.withinss})
 wss
 plot(1:k.max, wss,
      type="b", pch = 19, frame = FALSE, 
      xlab="Number of clusters K",
      ylab="Total within-clusters sum of squares")
-sp_km_clust = kmeans(numerical_spore[,2:12], centers = 6, nstart = 100)
+
+# d_clust <- Mclust(as.matrix(numerical_spore[,2:12]), G=1:10, 
+#                   modelNames = mclust.options("emModelNames"))
+# d_clust$BIC
+# plot(d_clust)
+
+fviz_nbclust(numerical_spore[,c(2:3, 5:12)], kmeans, method = "silhouette")
+
+sp_km_clust = kmeans(numerical_spore[,c(2:3, 5:12)], centers = 2, nstart = 100)
 numerical_spore$cluster = sp_km_clust$cluster
-distance <- get_dist(numerical_spore[2:12])
+#Distance matrix
+distance <- get_dist(numerical_spore[c(2:3, 5:12)])
 fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
 #clusplot(numerical_spore[2:12], numerical_spore$cluster)
 
 table(numerical_spore$cluster)
 names(daily)
-numerical_spore[numerical_spore$cluster == 1,]
-
-summary(numerical_spore[numerical_spore$cluster==2,])
-summary(numerical_spore[numerical_spore$cluster==5,])
 
 spr_lng = numerical_spore %>% 
   gather(key = var, value = x, acousticness:valence) %>%
@@ -117,5 +122,17 @@ spr_lng %>%
   geom_point() + geom_bar(stat = "identity") +
   facet_wrap(~var, scales = "free_y")
 #DifferentID = 3ATAV8kiC5wg7U0eSMHlQp
+```
+Cluster. within each cluster, we want to create a variable for each of the 10 closest songs, after performing a PCA to get features on 2 dimensions.
+PCA
+```{r}
+pca <- prcomp(numerical_spore[,c(2:3, 5:12)])
+summary(pca)
+scale(newdata, pca$center, pca$scale) %*% pca$rotation 
+library(dbscan)
+kNNdist(numerical_spore[,c(2:3, 5:12)], k = 10, search = "kd")
+dist(numerical_spore[,c(2:3, 5:12)])
+write.csv(numerical_spore[,c(1:3, 5:13)],"clustered.csv")
+
 ```
 

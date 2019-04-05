@@ -1,0 +1,138 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(rjson)
+library(corrplot)
+library(ClusterR)
+library(factoextra)
+library(mclust)
+
+spore <- fread("song_data.csv")
+summary(spore)
+head(spore)
+nrow(spore)
+n_distinct(spore$id)
+```
+We are given a dataset with 2555 distinct songs, each with 13 numerical descriptives.
+```{r}
+numerical_spore = spore[, c("id", "acousticness", "danceability", "duration_ms", "energy", "instrumentalness", "liveness", "loudness", "mode", "speechiness", "tempo", "valence")]
+heatmap(as.matrix(numerical_spore[, -c("id")]), scale = "column") #heatmap test (bad)
+corrmat <- cor(numerical_spore[,-c("id")], method = "pearson", use = "complete.obs")
+#Normalization
+numerical_spore$tempo <- numerical_spore$tempo/max(numerical_spore$tempo)
+numerical_spore$loudness <- numerical_spore$loudness/min(numerical_spore$loudness)
+#Drop outlier
+numerical_spore <- numerical_spore[numerical_spore$id != "3ATAV8kiC5wg7U0eSMHlQp",]
+
+#Calculate matrix p values
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+p.mat <- cor.mtest(corrmat)
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(corrmat, method = "color")
+corrplot(corrmat, method = "number", col = col(200), type = "upper")
+
+```
+
+Histograms
+```{r}
+hist(numerical_spore$acousticness)
+hist(numerical_spore$danceability)
+hist(numerical_spore$energy)
+hist(numerical_spore$instrumentalness)
+hist(numerical_spore$liveness)
+hist(numerical_spore$loudness)
+hist(numerical_spore$speechiness)
+hist(numerical_spore$tempo)
+
+```
+
+Feature Engineering
+```{r}
+names(spore)
+df = spore %>%
+  group_by(id) %>%
+  summarise(
+    dance_to_length = danceability/duration_ms,
+    speech_to_acoustics = speechiness/acousticness,
+    energy_to_liveness = energy/liveness,
+    noise = loudness/energy,
+    speed = tempo/duration_ms,
+    valence
+  )
+```
+
+Clustering
+```{r}
+set.seed(123)
+k.max <- 15
+wss <- sapply(1:k.max, 
+              function(k){kmeans(numerical_spore[,c(2:3, 5:12)], k, nstart=50,iter.max = 15 )$tot.withinss})
+wss
+plot(1:k.max, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+
+# d_clust <- Mclust(as.matrix(numerical_spore[,2:12]), G=1:10, 
+#                   modelNames = mclust.options("emModelNames"))
+# d_clust$BIC
+# plot(d_clust)
+
+fviz_nbclust(numerical_spore[,c(2:3, 5:12)], kmeans, method = "silhouette")
+
+sp_km_clust = kmeans(numerical_spore[,c(2:3, 5:12)], centers = 2, nstart = 100)
+numerical_spore$cluster = sp_km_clust$cluster
+#Distance matrix
+distance <- get_dist(numerical_spore[c(2:3, 5:12)])
+fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+#clusplot(numerical_spore[2:12], numerical_spore$cluster)
+
+table(numerical_spore$cluster)
+names(daily)
+
+spr_lng = numerical_spore %>% 
+  gather(key = var, value = x, acousticness:valence) %>%
+  mutate(
+    var = var
+  ) 
+
+spr_lng %>% 
+  group_by(var, cluster) %>%
+  summarise(y = mean(x)) %>%
+  ggplot(aes(cluster, y, color=factor(cluster), group=cluster)) + 
+  geom_point() + geom_bar(stat = "identity") +
+  facet_wrap(~var, scales = "free_y")
+#DifferentID = 3ATAV8kiC5wg7U0eSMHlQp
+```
+Cluster. within each cluster, we want to create a variable for each of the 10 closest songs, after performing a PCA to get features on 2 dimensions.
+PCA
+```{r}
+pca <- prcomp(numerical_spore[,c(2:3, 5:12)])
+summary(pca)
+scale(newdata, pca$center, pca$scale) %*% pca$rotation 
+library(dbscan)
+kNNdist(numerical_spore[,c(2:3, 5:12)], k = 10, search = "kd")
+dist(numerical_spore[,c(2:3, 5:12)])
+write.csv(numerical_spore[,c(1:3, 5:13)],"clustered.csv")
+
+```
+

@@ -7,13 +7,12 @@ output: html_notebook
 ```{r}
 library(data.table)
 library(tidyverse)
-library(rjson)
 library(corrplot)
 library(ClusterR)
 library(factoextra)
 library(mclust)
-
-spore <- fread("song_data.csv")
+setwd("../INSPIRE")
+spore <- fread("recommendations_with_components.csv")
 summary(spore)
 head(spore)
 nrow(spore)
@@ -85,7 +84,7 @@ Clustering
 set.seed(123)
 k.max <- 15
 wss <- sapply(1:k.max, 
-              function(k){kmeans(numerical_spore[,c(2:3, 5:12)], k, nstart=50,iter.max = 15 )$tot.withinss})
+              function(k){kmeans(numerical_spore[,c(3:8,10:12)], k, nstart=50,iter.max = 15 )$tot.withinss})
 wss
 plot(1:k.max, wss,
      type="b", pch = 19, frame = FALSE, 
@@ -97,10 +96,10 @@ plot(1:k.max, wss,
 # d_clust$BIC
 # plot(d_clust)
 
-fviz_nbclust(numerical_spore[,c(2:3, 5:12)], kmeans, method = "silhouette")
+fviz_nbclust(spore[,c(3:8,10:12)], kmeans, method = "silhouette")
 
-sp_km_clust = kmeans(numerical_spore[,c(2:3, 5:12)], centers = 2, nstart = 100)
-numerical_spore$cluster = sp_km_clust$cluster
+sp_km_clust = kmeans(spore[,c(3:8,10:12)], centers = 2, nstart = 100)
+spore$cluster = sp_km_clust$cluster
 #Distance matrix
 distance <- get_dist(numerical_spore[c(2:3, 5:12)])
 fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
@@ -109,7 +108,7 @@ fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4
 table(numerical_spore$cluster)
 names(daily)
 
-spr_lng = numerical_spore %>% 
+spr_lng = spore %>% 
   gather(key = var, value = x, acousticness:valence) %>%
   mutate(
     var = var
@@ -132,7 +131,8 @@ scale(newdata, pca$center, pca$scale) %*% pca$rotation
 library(dbscan)
 kNNdist(numerical_spore[,c(2:3, 5:12)], k = 10, search = "kd")
 dist(numerical_spore[,c(2:3, 5:12)])
-write.csv(numerical_spore[,c(1:3, 5:13)],"clustered.csv")
+write.csv(spore[,c(2:13)],"modeless_clustered.csv")
+table(spore$cluster)
 
 ```
 

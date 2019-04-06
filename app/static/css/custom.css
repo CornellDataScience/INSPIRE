@@ -1,3 +1,36 @@
 .label-info{
     color: black !important;
-  }
+    background-color: #5bc0de;
+    
+}
+
+.label {
+  padding: .2em .6em .3em !important;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 0.25em;
+}
+
+/* For div containing the search bar as well as the icon */
+#search-bar-container {
+  width: 700px !important;
+  margin: 0 auto !important;
+  display: table;
+}
+
+/* For the input bar*/
+.bootstrap-tagsinput {
+  width: 90% !important;
+  display: table-cell;
+  vertical-align: middle;
+}
+
+/* For the magnifying */
+.search-icon {
+  width: 10%;
+  padding: 5px;
+  margin-left: 10px;
+  display: table-cell;
+  vertical-align: top;
+}
+

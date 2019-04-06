@@ -15,6 +15,7 @@
 #search-bar-container {
   width: 700px !important;
   margin: 0 auto !important;
+  margin-top: 400px;
   display: table;
 }
 
@@ -23,6 +24,7 @@
   width: 90% !important;
   display: table-cell;
   vertical-align: middle;
+  margin-top: 300px !important;
 }
 
 /* For the magnifying */

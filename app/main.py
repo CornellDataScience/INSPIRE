@@ -62,9 +62,21 @@ def songSearchHandler():
 
 	return json.dumps({'status':'OK','id': song_id,'relevant_points': clustering_data})
 
-@app.route("/james")
-def james():
-    return "Hello, James"
+def getPairwiseComparisonData(song_id_1, song_id_2, df):
+	rows = df.loc[df['song_id'].isin([song_id_1, song_id_2])]
+	return rows
+
+@app.route("/radioPlot")
+def radioPlot():
+	SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+	csv_url = os.path.join(SITE_ROOT, "static/", "normalized_songs_for_radio_plot.csv")
+	song_id_1 = "5pvJ59i7JxylN8VB24xdMs"
+	song_id_2 = "3uHaLhm6yStMMAGetn1Z47"
+	#df = getPairwiseComparisonData(song_id_1, song_id_2, pd.read_csv(csv_url))
+	df = pd.read_csv(csv_url);
+	two_points = df.to_dict(orient='records')
+	two_points = json.dumps(two_points, indent=2)
+	return render_template('radioplot.html', two_points = two_points) 
 
 
 if __name__ == "__main__":

@@ -53,8 +53,6 @@
 </body>
 
 <script>
-
-    // console.log(song_data)
     var margin = {top: 20, right: 20, bottom: 30, left: 40},
         width = 960 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
@@ -103,7 +101,6 @@ var songs = new Bloodhound({
   prefetch: {
     url: 'static/song_id_and_names_0_63233.json',
     filter: function(list) {
-      // console.log(list)
     return list.songs;
     }
   }
@@ -130,7 +127,6 @@ elt.tagsinput({
 
 function loadClustering(song_id, relevant_points) {
 // load data
-d3.csv("./static/songs_with_recommendations_and_2d_proj_60k.csv", function(error, data) {
       var data = relevant_points;
       data = data.filter(function(song) {
         return Math.random() > 0.90 || song['top_10'] == true;
@@ -236,17 +232,16 @@ d3.csv("./static/songs_with_recommendations_and_2d_proj_60k.csv", function(error
           .attr("dy", ".35em")
           .style("text-anchor", "end")
           .text(function(d) { return d;})
-    });
+    
 }
-
 function createSongSummary(song_id, points) {
   var para = document.createElement("p");
+  para.className = "summary";
   var matching_songs = points.filter(function(song) {
     return song.song_id == song_id;
   });
   song_name = matching_songs[0].song_name;
   song_artist = matching_songs[0].artist;
-  console.log(song_name);
   var str = "Based on the song " + song_name + " by " + song_artist + " you are suggested: " 
   var text = document.createTextNode(str);
   para.appendChild(text);
@@ -256,40 +251,62 @@ function createSongSummary(song_id, points) {
 
 
   var matching_song_ids = [matching_songs[0].song_1, matching_songs[0].song_2, matching_songs[0].song_3, matching_songs[0].song_4, matching_songs[0].song_5, matching_songs[0].song_6, matching_songs[0].song_7, matching_songs[0].song_8, matching_songs[0].song_9, matching_songs[0].song_10];
-  console.log(matching_song_ids);
+  var matching_song_data = points.filter(function(song) {
+    return matching_song_ids.includes(song.song_id);
+  });
   var matching_song_names = []
   var matching_song_artists = []
+  // var matching_song_acousticness = []
+  // var matching_song_danceability = []
+  // var matching_song_energy = []
+  // var matching_song_instrumentalness = []
+  // var matching_song_loudness = []
+  // var matching_song_tempo = []
+  // var matching_song_speechiness = []
+
 
   for(i = 0; i < points.length; i++) {
     song = points[i];
     if(matching_song_ids.indexOf(song.song_id) > -1) {
       matching_song_names.push(song.song_name);
       matching_song_artists.push(song.artist);
+      // matching_song_acousticness.push(song.acousticness);
+      // matching_song_danceability.push(song.danceability);
+      // matching_song_energy.push(song.energy);
+      // matching_song_instrumentalness.push(song.instrumentalness);
+      // matching_song_loudness.push(song.loudness);
+      // matching_song_tempo.push(song.tempo);
+      // matching_song_speechiness.push(song.speechiness);
     }
   }
-  console.log(matching_song_names);
+  var meanAcousticness = d3.mean(matching_song_data, function(d) { return d.acousticness;});
+  console.log(meanAcousticness);
+  var meanDanceability = d3.mean(matching_song_data, function(d) { return d.danceability;});
+  var meanEnergy = d3.mean(matching_song_data, function(d) { return d.energy;});
+  var meanInstrumentalness = d3.mean(matching_song_data, function(d) { return d.instrumentalness;});
+  var meanLoudness = d3.mean(matching_song_data, function(d) { return d.loudness;});
+  var meanTempo = d3.mean(matching_song_data, function(d) { return d.tempo;});
+  var meanSpeechiness = d3.mean(matching_song_data, function(d) { return d.speechiness;});
+
+  
   
   
   var str2 = "";
   for(i = 0; i < matching_song_names.length; i++) {
     var para2 = document.createElement("p")
+    para2.className = "summary";
     var str2 = matching_song_names[i] + " - " + matching_song_artists[i];
     var text2 = document.createTextNode(str2);
     para2.appendChild(text2);
     container.appendChild(para2);
   }
-  
-  
-  
-  container.appendChild(para2);
 }
 
 function search(){
   var song_ids = document.getElementsByTagName("input")[2].value;
-  console.log(song_ids);
   song_ids = String(song_ids)
-  console.log("BUTTON CLICKED")
   d3.selectAll(".dot").remove();
+  d3.selectAll(".summary").remove();
   $.ajax({
             url: '/songSearchHandler',
             data: JSON.stringify({'song_ids':song_ids}),
@@ -297,15 +314,8 @@ function search(){
             type: 'POST',
             success: function(response) {
               value = JSON.parse(response)
-              console.log("AHHHHHHH");
-              console.log(value.id);
-              //console.log(value.relevant_points);
-              console.log(typeof(value.relevant_points));
               foo = JSON.parse(value.relevant_points.replace(/\bNaN\b/g, "null"));
-              console.log(foo);
-              console.log(typeof(foo));
               loadClustering(value.id, foo);
-              console.log("LOADED CLUSTERING");
               createSongSummary(value.id, foo);
 
             },

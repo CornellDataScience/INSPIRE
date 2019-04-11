@@ -27,20 +27,31 @@
       height: 28px;
       pointer-events: none;
     }
+
+    #clustering {
+      margin: auto;
+      text-align: center;
+    }
     </style>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
 
-<div id = "search-bar-container">
-    <input type="text" data-role="tagsinput" placeholder="Search for a song"/>
-    <div onclick="search()" class = "search-icon">
-        <i class="fas fa-search fa-2x"></i>
+<body>
+    <div id = "search-bar-container">
+        <input type="text" data-role="tagsinput" placeholder="Search for a song"/>
+        <div onclick="search()" class = "search-icon">
+            <i class="fas fa-search fa-2x"></i>
+        </div>
     </div>
-</div>
+
+    <div id = "clustering">
+    </div>
+
+</body>
+
 
 
 <script>
-    var song_data = {{ clustering_data | safe }}
 
     // console.log(song_data)
     var margin = {top: 20, right: 20, bottom: 30, left: 40},
@@ -55,13 +66,13 @@
      */ 
     
     // setup x 
-    var xValue = function(d) { return d.X;}, // data -> value
+    var xValue = function(d) { return d.x;}, // data -> value
         xScale = d3.scale.linear().range([0, width]), // value -> display
         xMap = function(d) { return xScale(xValue(d));}, // data -> display
         xAxis = d3.svg.axis().scale(xScale).orient("bottom");
     
     // setup y
-    var yValue = function(d) { return d.Y;}, // data -> value
+    var yValue = function(d) { return d.y;}, // data -> value
         yScale = d3.scale.linear().range([height, 0]), // value -> display
         yMap = function(d) { return yScale(yValue(d));}, // data -> display
         yAxis = d3.svg.axis().scale(yScale).orient("left");
@@ -71,7 +82,7 @@
         color = d3.scale.category10();
     
     // add the graph canvas to the body of the webpage
-    var svg = d3.select("body").append("svg")
+    var svg = d3.select("#clustering").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
       .append("g")
@@ -81,113 +92,6 @@
     var tooltip = d3.select("body").append("div")
         .attr("class", "tooltip")
         .style("opacity", 0);
-    
-    // load data
-    d3.csv("./static/recommendations_with_components.csv", function(error, data) {
-      var data = song_data;
-      // change string (from CSV) into number format
-      data.forEach(function(d) {
-        d.X = +d.X;
-        d.Y = +d.Y;
-    //    console.log(d);
-      });
-    
-      // don't want dots overlapping axis, so add in buffer to data domain
-      xScale.domain([d3.min(data, xValue)-1, d3.max(data, xValue)+1]);
-      yScale.domain([d3.min(data, yValue)-1, d3.max(data, yValue)+1]);
-    
-      // x-axis
-      svg.append("g")
-          .attr("class", "x axis")
-          .attr("transform", "translate(0," + height + ")")
-          .call(xAxis)
-        .append("text")
-          .attr("class", "label")
-          .attr("x", width)
-          .attr("y", -6)
-          .style("text-anchor", "end")
-          .text("X");
-    
-      // y-axis
-      svg.append("g")
-          .attr("class", "y axis")
-          .call(yAxis)
-        .append("text")
-          .attr("class", "label")
-          .attr("transform", "rotate(-90)")
-          .attr("y", 6)
-          .attr("dy", ".71em")
-          .style("text-anchor", "end")
-          .text("Y");
-    
-      // draw dots
-      svg.selectAll(".dot")
-          .data(data)
-        .enter().append("circle")
-          .attr("class", "dot")
-          .attr("r", function(d) {
-              if(d['top_10'] == true) {
-                return 8.0;
-              }
-              else {
-                return 3.0;
-              }
-          })
-          .attr("cx", xMap)
-          .attr("cy", yMap)
-          .style("fill", function(d) { 
-            if(d['top_10'] == true) {
-                return 'red';
-              }
-              else {
-                return 'blue';
-              }
-          })
-          .style("opacity", function(d) { 
-            if(d['top_10'] == true) {
-                return '0.8';
-              }
-              else {
-                return '0.2';
-              }
-          })
-          .on("mouseover", function(d) {
-              tooltip.transition()
-                   .duration(200)
-                   .style("opacity", .9);
-              tooltip.html(d.name + "<br/>")
-                   .style("left", (d3.event.pageX + 5) + "px")
-                   .style("top", (d3.event.pageY - 28) + "px");
-          })
-          .on("mouseout", function(d) {
-              tooltip.transition()
-                   .duration(500)
-                   .style("opacity", 0);
-          });
-    
-      // draw legend
-      var legend = svg.selectAll(".legend")
-          .data(color.domain())
-        .enter().append("g")
-          .attr("class", "legend")
-          .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
-    
-      // draw legend colored rectangles
-      legend.append("rect")
-          .attr("x", width - 18)
-          .attr("width", 18)
-          .attr("height", 18)
-          .style("fill", color);
-    
-      // draw legend text
-      legend.append("text")
-          .attr("x", width - 24)
-          .attr("y", 9)
-          .attr("dy", ".35em")
-          .style("text-anchor", "end")
-          .text(function(d) { return d;})
-    });
-    
     </script>
 
 
@@ -222,11 +126,124 @@ elt.tagsinput({
     source: songs.ttAdapter()
   }
 });
+
+function loadClustering(song_id, relevant_points) {
+// load data
+d3.csv("./static/songs_with_recommendations_and_2d_proj_60k.csv", function(error, data) {
+      var data = relevant_points;
+      data = data.filter(function(song) {
+        return Math.random() > 0.90 || song['top_10'] == true;
+      });
+
+      // change string (from CSV) into number format
+      data.forEach(function(d) {
+        d.X = +d.X;
+        d.Y = +d.Y;
+      });
+    
+      // don't want dots overlapping axis, so add in buffer to data domain
+      xScale.domain([d3.min(data, xValue)-0.01, d3.max(data, xValue)+0.01]);
+      yScale.domain([d3.min(data, yValue)-0.01, d3.max(data, yValue)+0.01]);
+    
+    
+      // draw dots
+      svg.selectAll(".dot")
+          .data(data)
+        .enter().append("circle")
+          .attr("class", "dot")
+          .attr("r", function(d) {
+              if(d['top_10'] == true) {
+                return 8.0;
+              }
+              else {
+                return 4.0;
+              }
+          })
+          .attr("cx", xMap)
+          .attr("cy", yMap)
+          .style("fill", function(d) { 
+              return color(cValue(d));
+          })
+          .style("opacity", function(d) { 
+            if(d['top_10'] == true) {
+                return '0.9';
+              }
+              else {
+                return '0.6';
+              }
+          })
+          .style("stroke-width", function(d) {
+            if(d['song_id'] == song_id) {
+              return 5;
+            }
+          })
+          .on("mouseover", function(d) {
+            d3.selectAll('circle').style("r", function(dot){
+              if(d['top_10'] && dot['top_10']){
+                return 10.0;
+              } 
+              else if (d['top_10'] && (d['cluster'] == dot['cluster'])){
+                return 5.0
+              }
+              else if(d['top_10'] == false && dot['top_10'] == false && (d['cluster'] == dot['cluster'])) {
+                return 5.0;
+              }
+            });
+              
+              tooltip.transition()
+                   .duration(200)
+                   .style("opacity", .9);
+              tooltip.html(d.song_name + " - " + d.artist + "<br/>")
+                   .style("left", (d3.event.pageX + 5) + "px")
+                   .style("top", (d3.event.pageY - 28) + "px");
+          })
+          .on("mouseout", function(d) {
+            d3.selectAll('circle').style("r", function(dot){
+              if(d['top_10'] && dot['top_10']){
+                return 8.0;
+              } 
+              else if (d['top_10'] && (d['cluster'] == dot['cluster'])){
+                return 4.0;
+              }
+              else if(d['top_10'] == false && dot['top_10'] == false && (d['cluster'] == dot['cluster'])) {
+                return 4.0;
+              }
+            });
+              tooltip.transition()
+                   .duration(500)
+                   .style("opacity", 0);
+          });
+    
+      // draw legend
+      var legend = svg.selectAll(".legend")
+          .data(color.domain())
+        .enter().append("g")
+          .attr("class", "legend")
+          .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+    
+      // draw legend colored rectangles
+      legend.append("rect")
+          .attr("x", width - 18)
+          .attr("width", 18)
+          .attr("height", 18)
+          .style("fill", color);
+    
+      // draw legend text
+      legend.append("text")
+          .attr("x", width - 24)
+          .attr("y", 9)
+          .attr("dy", ".35em")
+          .style("text-anchor", "end")
+          .text(function(d) { return d;})
+    });
+}
+
 function search(){
   var song_ids = document.getElementsByTagName("input")[2].value;
   console.log(song_ids);
   song_ids = String(song_ids)
   console.log("BUTTON CLICKED")
+  d3.selectAll(".dot").remove();
   $.ajax({
             url: '/songSearchHandler',
             data: JSON.stringify({'song_ids':song_ids}),
@@ -234,7 +251,17 @@ function search(){
             type: 'POST',
             success: function(response) {
               value = JSON.parse(response)
-                console.log(value.id);
+              console.log("AHHHHHHH");
+              console.log(value.id);
+              //console.log(value.relevant_points);
+              console.log(typeof(value.relevant_points));
+              foo = JSON.parse(value.relevant_points.replace(/\bNaN\b/g, "null"));
+              console.log(foo);
+              console.log(typeof(foo));
+              
+              loadClustering(value.id, foo);
+              console.log("LOADED CLUSTERING");
+
             },
             error: function(error) {
               console.log("ERROR")

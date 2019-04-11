@@ -28,7 +28,7 @@
       pointer-events: none;
     }
 
-    #clustering {
+    #clustering, #song_summary {
       margin: auto;
       text-align: center;
     }
@@ -47,9 +47,10 @@
     <div id = "clustering">
     </div>
 
+    <div id = "song_summary">
+    </div>
+
 </body>
-
-
 
 <script>
 
@@ -238,6 +239,51 @@ d3.csv("./static/songs_with_recommendations_and_2d_proj_60k.csv", function(error
     });
 }
 
+function createSongSummary(song_id, points) {
+  var para = document.createElement("p");
+  var matching_songs = points.filter(function(song) {
+    return song.song_id == song_id;
+  });
+  song_name = matching_songs[0].song_name;
+  song_artist = matching_songs[0].artist;
+  console.log(song_name);
+  var str = "Based on the song " + song_name + " by " + song_artist + " you are suggested: " 
+  var text = document.createTextNode(str);
+  para.appendChild(text);
+
+  var container = document.getElementById("song_summary");
+  container.appendChild(para);
+
+
+  var matching_song_ids = [matching_songs[0].song_1, matching_songs[0].song_2, matching_songs[0].song_3, matching_songs[0].song_4, matching_songs[0].song_5, matching_songs[0].song_6, matching_songs[0].song_7, matching_songs[0].song_8, matching_songs[0].song_9, matching_songs[0].song_10];
+  console.log(matching_song_ids);
+  var matching_song_names = []
+  var matching_song_artists = []
+
+  for(i = 0; i < points.length; i++) {
+    song = points[i];
+    if(matching_song_ids.indexOf(song.song_id) > -1) {
+      matching_song_names.push(song.song_name);
+      matching_song_artists.push(song.artist);
+    }
+  }
+  console.log(matching_song_names);
+  
+  
+  var str2 = "";
+  for(i = 0; i < matching_song_names.length; i++) {
+    var para2 = document.createElement("p")
+    var str2 = matching_song_names[i] + " - " + matching_song_artists[i];
+    var text2 = document.createTextNode(str2);
+    para2.appendChild(text2);
+    container.appendChild(para2);
+  }
+  
+  
+  
+  container.appendChild(para2);
+}
+
 function search(){
   var song_ids = document.getElementsByTagName("input")[2].value;
   console.log(song_ids);
@@ -258,9 +304,9 @@ function search(){
               foo = JSON.parse(value.relevant_points.replace(/\bNaN\b/g, "null"));
               console.log(foo);
               console.log(typeof(foo));
-              
               loadClustering(value.id, foo);
               console.log("LOADED CLUSTERING");
+              createSongSummary(value.id, foo);
 
             },
             error: function(error) {

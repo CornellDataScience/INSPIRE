@@ -38,7 +38,7 @@ def get_relevant_points(song_id, df):
 	center_x = (min_x + max_x) / 2
 	center_y = (min_y + max_y) / 2
 	#relevant_rows = df[(df['x'] >= min_x - (0.4)) & (df['x'] <= max_x + 0.4) & (df['y'] >= min_y - 0.4) & (df['y'] <= max_y) + 0.4]
-	relevant_rows = df[(df['x'] - center_x)**2 + (df['y'] - center_y)**2 <= 0.10]
+	relevant_rows = df[(df['x'] - center_x)**2 + (df['y'] - center_y)**2 <= max(max_x - center_x, max_y - center_y)**2 + 0.10]
 	#relevant_rows = df
 	relevant_rows["top_10"] = False
 	relevant_rows["top_10"] = np.where(relevant_rows['song_id'].isin(relevant_points), True, False)

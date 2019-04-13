@@ -27,22 +27,32 @@
       height: 28px;
       pointer-events: none;
     }
+
+    #clustering, #song_summary {
+      margin: auto;
+      text-align: center;
+    }
     </style>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
 
-<div id = "search-bar-container">
-    <input type="text" data-role="tagsinput" placeholder="Search for a song"/>
-    <div onclick="search()" class = "search-icon">
-        <i class="fas fa-search fa-2x"></i>
+<body>
+    <div id = "search-bar-container">
+        <input type="text" data-role="tagsinput" placeholder="Search for a song"/>
+        <div onclick="search()" class = "search-icon">
+            <i class="fas fa-search fa-2x"></i>
+        </div>
     </div>
-</div>
 
+    <div id = "clustering">
+    </div>
+
+    <div id = "song_summary">
+    </div>
+
+</body>
 
 <script>
-    var song_data = {{ clustering_data | safe }}
-
-    // console.log(song_data)
     var margin = {top: 20, right: 20, bottom: 30, left: 40},
         width = 960 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
@@ -55,13 +65,13 @@
      */ 
     
     // setup x 
-    var xValue = function(d) { return d.X;}, // data -> value
+    var xValue = function(d) { return d.x;}, // data -> value
         xScale = d3.scale.linear().range([0, width]), // value -> display
         xMap = function(d) { return xScale(xValue(d));}, // data -> display
         xAxis = d3.svg.axis().scale(xScale).orient("bottom");
     
     // setup y
-    var yValue = function(d) { return d.Y;}, // data -> value
+    var yValue = function(d) { return d.y;}, // data -> value
         yScale = d3.scale.linear().range([height, 0]), // value -> display
         yMap = function(d) { return yScale(yValue(d));}, // data -> display
         yAxis = d3.svg.axis().scale(yScale).orient("left");
@@ -71,7 +81,7 @@
         color = d3.scale.category10();
     
     // add the graph canvas to the body of the webpage
-    var svg = d3.select("body").append("svg")
+    var svg = d3.select("#clustering").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
       .append("g")
@@ -81,44 +91,57 @@
     var tooltip = d3.select("body").append("div")
         .attr("class", "tooltip")
         .style("opacity", 0);
-    
-    // load data
-    d3.csv("./static/recommendations_with_components.csv", function(error, data) {
-      var data = song_data;
+    </script>
+
+
+<script>
+var songs = new Bloodhound({
+  datumTokenizer: Bloodhound.tokenizers.obj.whitespace('song_name', 'artist'),
+  queryTokenizer: Bloodhound.tokenizers.whitespace,
+  prefetch: {
+    url: 'static/song_id_and_names_0_63233.json',
+    filter: function(list) {
+    return list.songs;
+    }
+  }
+});
+
+songs.clearPrefetchCache();
+songs.initialize();
+
+var elt = $('input');
+elt.tagsinput({
+  itemValue: 'song_id',
+  itemText: function(song){
+    return song.song_name + ' - ' + song.artist;
+    },
+  typeaheadjs: {
+    name: 'songs',
+    limit: 10,
+    displayKey: function(song){
+      return song.song_name + ' - ' + song.artist;
+    },
+    source: songs.ttAdapter()
+  }
+});
+
+function loadClustering(song_id, relevant_points) {
+// load data
+      var data = relevant_points;
+      data = data.filter(function(song) {
+        return Math.random() > 0.90 || song['top_10'] == true;
+      });
+
       // change string (from CSV) into number format
       data.forEach(function(d) {
         d.X = +d.X;
         d.Y = +d.Y;
-    //    console.log(d);
       });
     
       // don't want dots overlapping axis, so add in buffer to data domain
-      xScale.domain([d3.min(data, xValue)-1, d3.max(data, xValue)+1]);
-      yScale.domain([d3.min(data, yValue)-1, d3.max(data, yValue)+1]);
+      xScale.domain([d3.min(data, xValue)-0.01, d3.max(data, xValue)+0.01]);
+      yScale.domain([d3.min(data, yValue)-0.01, d3.max(data, yValue)+0.01]);
     
-      // x-axis
-      svg.append("g")
-          .attr("class", "x axis")
-          .attr("transform", "translate(0," + height + ")")
-          .call(xAxis)
-        .append("text")
-          .attr("class", "label")
-          .attr("x", width)
-          .attr("y", -6)
-          .style("text-anchor", "end")
-          .text("X");
-    
-      // y-axis
-      svg.append("g")
-          .attr("class", "y axis")
-          .call(yAxis)
-        .append("text")
-          .attr("class", "label")
-          .attr("transform", "rotate(-90)")
-          .attr("y", 6)
-          .attr("dy", ".71em")
-          .style("text-anchor", "end")
-          .text("Y");
     
       // draw dots
       svg.selectAll(".dot")
@@ -130,36 +153,59 @@
                 return 8.0;
               }
               else {
-                return 3.0;
+                return 4.0;
               }
           })
           .attr("cx", xMap)
           .attr("cy", yMap)
           .style("fill", function(d) { 
-            if(d['top_10'] == true) {
-                return 'red';
-              }
-              else {
-                return 'blue';
-              }
+              return color(cValue(d));
           })
           .style("opacity", function(d) { 
             if(d['top_10'] == true) {
-                return '0.8';
+                return '0.9';
               }
               else {
-                return '0.2';
+                return '0.6';
               }
           })
+          .style("stroke-width", function(d) {
+            if(d['song_id'] == song_id) {
+              return 5;
+            }
+          })
           .on("mouseover", function(d) {
+            d3.selectAll('circle').style("r", function(dot){
+              if(d['top_10'] && dot['top_10']){
+                return 10.0;
+              } 
+              else if (d['top_10'] && (d['cluster'] == dot['cluster'])){
+                return 5.0
+              }
+              else if(d['top_10'] == false && dot['top_10'] == false && (d['cluster'] == dot['cluster'])) {
+                return 5.0;
+              }
+            });
+              
               tooltip.transition()
                    .duration(200)
                    .style("opacity", .9);
-              tooltip.html(d.name + "<br/>")
+              tooltip.html(d.song_name + " - " + d.artist + "<br/>")
                    .style("left", (d3.event.pageX + 5) + "px")
                    .style("top", (d3.event.pageY - 28) + "px");
           })
           .on("mouseout", function(d) {
+            d3.selectAll('circle').style("r", function(dot){
+              if(d['top_10'] && dot['top_10']){
+                return 8.0;
+              } 
+              else if (d['top_10'] && (d['cluster'] == dot['cluster'])){
+                return 4.0;
+              }
+              else if(d['top_10'] == false && dot['top_10'] == false && (d['cluster'] == dot['cluster'])) {
+                return 4.0;
+              }
+            });
               tooltip.transition()
                    .duration(500)
                    .style("opacity", 0);
@@ -186,47 +232,81 @@
           .attr("dy", ".35em")
           .style("text-anchor", "end")
           .text(function(d) { return d;})
-    });
     
-    </script>
+}
+function createSongSummary(song_id, points) {
+  var para = document.createElement("p");
+  para.className = "summary";
+  var matching_songs = points.filter(function(song) {
+    return song.song_id == song_id;
+  });
+  song_name = matching_songs[0].song_name;
+  song_artist = matching_songs[0].artist;
+  var str = "Based on the song " + song_name + " by " + song_artist + " you are suggested: " 
+  var text = document.createTextNode(str);
+  para.appendChild(text);
+
+  var container = document.getElementById("song_summary");
+  container.appendChild(para);
 
 
-<script>
-var songs = new Bloodhound({
-  datumTokenizer: Bloodhound.tokenizers.obj.whitespace('song_name', 'artist'),
-  queryTokenizer: Bloodhound.tokenizers.whitespace,
-  prefetch: {
-    url: 'static/song_id_and_names_0_63233.json',
-    filter: function(list) {
-      // console.log(list)
-    return list.songs;
+  var matching_song_ids = [matching_songs[0].song_1, matching_songs[0].song_2, matching_songs[0].song_3, matching_songs[0].song_4, matching_songs[0].song_5, matching_songs[0].song_6, matching_songs[0].song_7, matching_songs[0].song_8, matching_songs[0].song_9, matching_songs[0].song_10];
+  var matching_song_data = points.filter(function(song) {
+    return matching_song_ids.includes(song.song_id);
+  });
+  var matching_song_names = []
+  var matching_song_artists = []
+  // var matching_song_acousticness = []
+  // var matching_song_danceability = []
+  // var matching_song_energy = []
+  // var matching_song_instrumentalness = []
+  // var matching_song_loudness = []
+  // var matching_song_tempo = []
+  // var matching_song_speechiness = []
+
+
+  for(i = 0; i < points.length; i++) {
+    song = points[i];
+    if(matching_song_ids.indexOf(song.song_id) > -1) {
+      matching_song_names.push(song.song_name);
+      matching_song_artists.push(song.artist);
+      // matching_song_acousticness.push(song.acousticness);
+      // matching_song_danceability.push(song.danceability);
+      // matching_song_energy.push(song.energy);
+      // matching_song_instrumentalness.push(song.instrumentalness);
+      // matching_song_loudness.push(song.loudness);
+      // matching_song_tempo.push(song.tempo);
+      // matching_song_speechiness.push(song.speechiness);
     }
   }
-});
+  var meanAcousticness = d3.mean(matching_song_data, function(d) { return d.acousticness;});
+  console.log(meanAcousticness);
+  var meanDanceability = d3.mean(matching_song_data, function(d) { return d.danceability;});
+  var meanEnergy = d3.mean(matching_song_data, function(d) { return d.energy;});
+  var meanInstrumentalness = d3.mean(matching_song_data, function(d) { return d.instrumentalness;});
+  var meanLoudness = d3.mean(matching_song_data, function(d) { return d.loudness;});
+  var meanTempo = d3.mean(matching_song_data, function(d) { return d.tempo;});
+  var meanSpeechiness = d3.mean(matching_song_data, function(d) { return d.speechiness;});
 
-songs.clearPrefetchCache();
-songs.initialize();
-
-var elt = $('input');
-elt.tagsinput({
-  itemValue: 'song_id',
-  itemText: function(song){
-    return song.song_name + ' - ' + song.artist;
-    },
-  typeaheadjs: {
-    name: 'songs',
-    limit: 10,
-    displayKey: function(song){
-      return song.song_name + ' - ' + song.artist;
-    },
-    source: songs.ttAdapter()
+  
+  
+  
+  var str2 = "";
+  for(i = 0; i < matching_song_names.length; i++) {
+    var para2 = document.createElement("p")
+    para2.className = "summary";
+    var str2 = matching_song_names[i] + " - " + matching_song_artists[i];
+    var text2 = document.createTextNode(str2);
+    para2.appendChild(text2);
+    container.appendChild(para2);
   }
-});
+}
+
 function search(){
   var song_ids = document.getElementsByTagName("input")[2].value;
-  console.log(song_ids);
   song_ids = String(song_ids)
-  console.log("BUTTON CLICKED")
+  d3.selectAll(".dot").remove();
+  d3.selectAll(".summary").remove();
   $.ajax({
             url: '/songSearchHandler',
             data: JSON.stringify({'song_ids':song_ids}),
@@ -234,7 +314,10 @@ function search(){
             type: 'POST',
             success: function(response) {
               value = JSON.parse(response)
-                console.log(value.id);
+              foo = JSON.parse(value.relevant_points.replace(/\bNaN\b/g, "null"));
+              loadClustering(value.id, foo);
+              createSongSummary(value.id, foo);
+
             },
             error: function(error) {
               console.log("ERROR")

@@ -7,8 +7,46 @@
 
 <style>
     body {
+      height: 100%;
+      margin: 0;
       font: 11px sans-serif;
+      background-image: linear-gradient(120deg, #D3D3D3, #191414); 
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+        background-repeat: no-repeat;
+    background-attachment: fixed;
     }
+
+    #style-1::-webkit-scrollbar-track
+  {
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+    border-radius: 10px;
+  }
+
+  #style-1::-webkit-scrollbar
+  {
+    width: 12px;
+  }
+
+  #style-1::-webkit-scrollbar-thumb
+  {
+    border-radius: 10px;
+    box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+    background-color: #555;
+  }
+
+  .player-scrollbar
+  {
+    height: 400px;
+    width: 412px;
+    overflow-y: scroll;
+    margin: auto;
+    text-align: center;
+  }
+
+
 
     .axis path,
     .axis line {
@@ -32,6 +70,11 @@
       margin: auto;
       text-align: center;
     }
+
+    .based-on {
+      font-size: 24pt;
+      color: white;
+    }
     </style>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
@@ -48,7 +91,7 @@
     </div>
 
     <div id = "song_summary">
-    </div>
+      </div>
 
 </body>
 
@@ -129,7 +172,7 @@ function loadClustering(song_id, relevant_points) {
 // load data
       var data = relevant_points;
       data = data.filter(function(song) {
-        return Math.random() > 0.90 || song['top_10'] == true;
+        return song['top_10'] == true;
       });
 
       // change string (from CSV) into number format
@@ -211,32 +254,16 @@ function loadClustering(song_id, relevant_points) {
                    .style("opacity", 0);
           });
     
-      // draw legend
-      var legend = svg.selectAll(".legend")
-          .data(color.domain())
-        .enter().append("g")
-          .attr("class", "legend")
-          .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
-    
-      // draw legend colored rectangles
-      legend.append("rect")
-          .attr("x", width - 18)
-          .attr("width", 18)
-          .attr("height", 18)
-          .style("fill", color);
-    
-      // draw legend text
-      legend.append("text")
-          .attr("x", width - 24)
-          .attr("y", 9)
-          .attr("dy", ".35em")
-          .style("text-anchor", "end")
-          .text(function(d) { return d;})
+      
     
 }
 function createSongSummary(song_id, points) {
-  var para = document.createElement("p");
-  para.className = "summary";
+  var song_summary_container = document.getElementById ("song_summary");
+  console.log(song_summary_container);
+
+
+  var basedOnElem = document.createElement("h1");
+  basedOnElem.className = "based-on";
   var matching_songs = points.filter(function(song) {
     return song.song_id == song_id;
   });
@@ -244,10 +271,9 @@ function createSongSummary(song_id, points) {
   song_artist = matching_songs[0].artist;
   var str = "Based on the song " + song_name + " by " + song_artist + " you are suggested: " 
   var text = document.createTextNode(str);
-  para.appendChild(text);
+  basedOnElem.appendChild(text);
 
-  var container = document.getElementById("song_summary");
-  container.appendChild(para);
+  song_summary_container.appendChild(basedOnElem);
 
 
   var matching_song_ids = [matching_songs[0].song_1, matching_songs[0].song_2, matching_songs[0].song_3, matching_songs[0].song_4, matching_songs[0].song_5, matching_songs[0].song_6, matching_songs[0].song_7, matching_songs[0].song_8, matching_songs[0].song_9, matching_songs[0].song_10];
@@ -289,24 +315,41 @@ function createSongSummary(song_id, points) {
   var meanSpeechiness = d3.mean(matching_song_data, function(d) { return d.speechiness;});
 
   
-  
-  
-  var str2 = "";
-  for(i = 0; i < matching_song_names.length; i++) {
-    var para2 = document.createElement("p")
-    para2.className = "summary";
-    var str2 = matching_song_names[i] + " - " + matching_song_artists[i];
-    var text2 = document.createTextNode(str2);
-    para2.appendChild(text2);
-    container.appendChild(para2);
+  // Append song players 
+  song_previews = []
+  var player_container = document.createElement("div");
+  player_container.className = "player-scrollbar";
+  player_container.id= "style-1";
+  for(i = 0; i < matching_song_ids.length; i++) {
+    var iframe = document.createElement('iframe');
+    iframe.src = "https://open.spotify.com/embed/track/" + matching_song_ids[i];
+    iframe.width = "400";
+    iframe.height = "80";
+    iframe.frameBorder = "0";
+    iframe.allowtransparency = "true";
+    iframe.allow = "encrypted-media";
+    player_container.appendChild(iframe);
   }
+
+  song_summary_container.appendChild(player_container);
+
+
+  // var str2 = "";
+  // for(i = 0; i < matching_song_names.length; i++) {
+  //   var para2 = document.createElement("p")
+  //   para2.className = "summary";
+  //   var str2 = matching_song_names[i] + " - " + matching_song_artists[i];
+  //   var text2 = document.createTextNode(str2);
+  //   para2.appendChild(text2);
+  //   container.appendChild(para2);
+  // }
 }
 
 function search(){
   var song_ids = document.getElementsByTagName("input")[2].value;
   song_ids = String(song_ids)
   d3.selectAll(".dot").remove();
-  d3.selectAll(".summary").remove();
+  d3.select("#song_summary").selectAll("*").remove();
   $.ajax({
             url: '/songSearchHandler',
             data: JSON.stringify({'song_ids':song_ids}),

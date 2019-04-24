@@ -130,6 +130,10 @@ def playlistTrackRetriever():
 	print(playlist_track_ids)
 	return json.dumps( {'playlist_track_ids': playlist_track_ids})
 	
+@app.route('/summarizationPage', methods = ['GET', 'POST'])
+def summarizationPage():
+	return render_template('summarization_page.html')
+
 
 if __name__ == "__main__":
     app.run(debug=True)

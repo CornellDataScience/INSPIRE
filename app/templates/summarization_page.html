@@ -103,6 +103,12 @@
         font-weight: 600;
         margin-top: 50px;
     }
+    .playlist_analysis_text {
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+        margin-top: 50px;
+    }
 </style>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
@@ -119,11 +125,11 @@
 <script>
 
     // Called whenever you click on a playlist name
-    function playlistOnClick(playlist_id) {
-        playlistTrackRetriever(playlist_id);
+    function playlistOnClick(playlist_id, playlist_name) {
+        playlistTrackRetriever(playlist_id, playlist_name);
     }
 
-    function generateTrackViewForPlaylist(track_ids) {
+    function generateTrackViewForPlaylist(track_ids, playlist_name) {
         console.log(document.getElementById("playlist_track_view"));
         if(document.getElementById("playlist_track_view") != null) {
             document.getElementById("playlist_track_view").remove();
@@ -171,8 +177,8 @@
         playlist_name_para.appendChild(playlist_name_text);
 
 
-        playlist_image.onclick = function () { playlistOnClick(playlist.playlist_id); };
-        playlist_name_text.onclick = function () { playlistOnClick(playlist.playlist_id); };
+        playlist_image.onclick = function () { playlistOnClick(playlist.playlist_id, playlist.playlist_name); };
+        playlist_name_text.onclick = function () { playlistOnClick(playlist.playlist_id, playlist.playlist_name); };
 
 
         playlist_component.appendChild(playlist_name_para);
@@ -211,7 +217,33 @@
         });
     })();
 
-    function playlistTrackRetriever(playlist_id) {
+    function displayPlaylistAnalysisText(text) {
+        var body = document.getElementsByTagName("body")[0];
+        var playlistAnalysisDiv = document.createElement("div");
+        playlistAnalysisDiv.className = "playlist_analysis_text";
+        playlistAnalysisDiv.innerHTML = text;
+        body.appendChild(playlistAnalysisDiv);
+    }
+
+
+    function generateAnalysisForPlaylist(playlist_track_ids) {
+        $.ajax({
+            url: '/playlistTrackAnalysis',
+            data: JSON.stringify({ 'playlist_id': playlist_track_ids }),
+            contentType: "application/json",
+            type: 'POST',
+            success: function (response) {
+                response = JSON.parse(response);
+                console.log(response.track_analysis);
+                displayPlaylistAnalysisText(response.track_analysis);
+            },
+            error: function (error) {
+                console.log("ERROR IN PLAYLIST TRACK analysis");
+            }
+        });
+    }
+
+    function playlistTrackRetriever(playlist_id, playlist_name) {
         $.ajax({
             url: '/playlistTrackRetriever',
             data: JSON.stringify({ 'playlist_id': playlist_id }),
@@ -221,8 +253,10 @@
                 response = JSON.parse(response);
                 console.log(response);
 
-                generateTrackViewForPlaylist(response.playlist_track_ids);
-                console.log("finished generating tracks");
+                generateTrackViewForPlaylist(response.playlist_track_ids, playlist_name);
+                console.log("generating analysis for playlists");
+                generateAnalysisForPlaylist(response.playlist_track_ids);
+                console.log("finished generating analysis");
 
             },
             error: function (error) {

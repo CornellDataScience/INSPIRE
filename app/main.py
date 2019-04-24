@@ -137,17 +137,20 @@ def radioPlot():
 
 @app.route('/playlistRetriever', methods=['GET', 'POST'])
 def playlistRetriever():
+	scope = 'playlist-read-private playlist-read-collaborative user-library-read user-read-recently-played user-top-read'
+	username = 'jchen13542'
+	global token
+	global sp
+	token = util.prompt_for_user_token(username,scope,client_id=os.environ['SPOTIPY_CLIENT_ID'],client_secret=os.environ['SPOTIPY_CLIENT_SECRET'],redirect_uri=os.environ['SPOTIPY_REDIRECT_URI'])
+	sp = spotipy.Spotify(auth=token)
 	playlists = sp.current_user_playlists()
 	playlist_data = []
-	print("aaaa", playlists)
 	for playlist in playlists['items']:
 		playlist_image = playlist['images'][0]['url']
-		print(playlist_image)
 		playlist_id = playlist['id']
 		playlist_name = playlist['name']
 		playlist_data.append({'playlist_id': playlist_id, 'playlist_name': playlist_name, 'playlist_url': playlist_image})
 
-	print(playlist_data)
 	return json.dumps(
 		playlist_data
 	)
@@ -156,9 +159,7 @@ def playlistRetriever():
 def playlistTrackRetriever():
 	playlist_track_ids = []
 	playlist_id = list(request.json.values())[0]
-	print(sp.me())
 	results = sp.user_playlist('1226629431', playlist_id, fields = 'tracks,next,name')
-	print("bbbbb", results)
 	for track in results['tracks']['items']:
 		if track != None and track['track'] != None:
 			track_id = track['track']['id']
@@ -184,6 +185,58 @@ def homePage():
 	token = util.prompt_for_user_token(username,scope,client_id=os.environ['SPOTIPY_CLIENT_ID'],client_secret=os.environ['SPOTIPY_CLIENT_SECRET'],redirect_uri=os.environ['SPOTIPY_REDIRECT_URI'])
 	sp = spotipy.Spotify(auth=token)
 	return render_template('index.html')
+
+
+def trackAnalysis(track_ids):
+	print("TRACK ANALYSIS")
+	artist_ids = set()
+	for track_id in track_ids:
+		track_information = sp.track(track_id)
+		artist_id = None
+		try:
+			artist_id = track_information['album']['artists'][0]['id']
+		except Exception as e:
+			pass
+		if artist_id != None:
+			artist_ids.add(artist_id)
+		all_genres = []
+		for artist_id in artist_ids:
+			try:
+				
+				artist_genres = sp.artists(artist_ids)['artists'][0]['genres']
+				all_genres += artist_genres
+			except Exception as e:
+				print(e)
+				pass
+	print("WTF")
+	print(all_genres)
+	all_genres = [x.lower() for x in all_genres]
+	genre_counts = [[x,all_genres.count(x)] for x in set(all_genres)]
+	print(genre_counts)
+
+	sorted_by_occurrence = sorted(genre_counts, key=lambda tup: tup[1])
+	top_genres = [x[0] for x in sorted_by_occurrence[0:3]]
+	print(top_genres)
+	genres_text = ", ".join(top_genres)
+	text = "This playlist consists primarily of songs from the " + genres_text + " genre(s)."
+
+	return text
+
+@app.route('/playlistTrackAnalysis', methods = ['GET', 'POST'])
+def playlistTrackAnalysis():
+	scope = 'playlist-read-private playlist-read-collaborative user-library-read user-read-recently-played user-top-read'
+	username = 'jchen13542'
+	global token
+	global sp
+	token = util.prompt_for_user_token(username,scope,client_id=os.environ['SPOTIPY_CLIENT_ID'],client_secret=os.environ['SPOTIPY_CLIENT_SECRET'],redirect_uri=os.environ['SPOTIPY_REDIRECT_URI'])
+	sp = spotipy.Spotify(auth=token)
+	track_ids = request.json
+	track_ids = list(track_ids.values())[0]
+	print(type(track_ids))
+	print("lalalaalalalaala")
+	print(track_ids)
+	summary_information = trackAnalysis(track_ids)
+	return json.dumps( {'track_analysis': summary_information})
 
 if __name__ == "__main__":
     app.run(debug=True)

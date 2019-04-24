@@ -7,13 +7,15 @@
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700" rel="stylesheet">
-  <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic'
+    rel='stylesheet' type='text/css'>
 
   <!-- Plugin CSS -->
   <link href="../static/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
 
   <!-- Theme CSS - Includes Bootstrap -->
   <link href="../static/css/creative.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Oxygen" rel="stylesheet">
 </head>
 
 
@@ -21,7 +23,8 @@
   body {
     height: 100%;
     margin: 0;
-    font: 11px sans-serif;
+    font: 12px sans-serif;
+    font-weight:500;
     background-image: linear-gradient(120deg, #1DB954, #191414);
     -webkit-background-size: cover;
     -moz-background-size: cover;
@@ -56,7 +59,8 @@
 
   #clustering,
   #song_summary,
-  #song_statistics {
+  #song_statistics,
+  #radar_plot {
     margin: auto;
     text-align: center;
   }
@@ -86,31 +90,33 @@
   }
 </style>
 
-<script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top py-3" id="mainNav">
-        <div class="container">
-          <a class="navbar-brand js-scroll-trigger" href="#page-top">INSPIRE</a>
-          <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarResponsive">
-            <ul class="navbar-nav ml-auto my-2 my-lg-0">
-              <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#home">Home</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#features">Features</a>
-              </li>
-    
-              <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="https://cornelldata.science/">Cornell Data Science</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
+  <nav class="navbar navbar-expand-lg navbar-light fixed-top py-3" id="mainNav">
+    <div class="container">
+      <a class="navbar-brand js-scroll-trigger" href="#page-top">INSPIRE</a>
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+        data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+        aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto my-2 my-lg-0">
+          <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="#home">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="#features">Features</a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="https://cornelldata.science/">Cornell Data Science</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
   <div id="search-bar-container">
     <input type="text" data-role="tagsinput" placeholder="Search for a song" />
@@ -118,18 +124,26 @@
       <i class="fas fa-search fa-2x"></i>
     </div>
   </div>
+  <br><br>
 
   <div id="clustering"></div>
+  <br>
+  <br>
+  <div id="radar_plot"></div>
+  <br><br>
 
   <div id="song_summary"></div>
-
+  <br><br>
   <div id="song_statistics"></div>
 </body>
 
-<script>
 
-  // Clustering setup
-  var margin = { top: 30, right: 0, bottom: 30, left: 0 },
+</div>
+
+</body>
+
+<script>
+  var margin = { top: 20, right: 20, bottom: 30, left: 40 },
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
@@ -142,17 +156,22 @@
 
   // setup x 
   var xValue = function (d) { return d.x; }, // data -> value
-    xScale = d3.scale.linear().range([0, width]), // value -> display
-    xMap = function (d) { return xScale(xValue(d)); }; // data -> display
+    xScale = d3.scaleLinear().range([0, width]), // value -> display
+    xMap = function (d) { return xScale(xValue(d)); }, // data -> display
+    // xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+    xAxis = d3.axisBottom(xScale);
 
   // setup y
   var yValue = function (d) { return d.y; }, // data -> value
-    yScale = d3.scale.linear().range([height, 0]), // value -> display
-    yMap = function (d) { return yScale(yValue(d)); }; // data -> display
+    yScale = d3.scaleLinear().range([height, 0]), // value -> display
+    yMap = function (d) { return yScale(yValue(d)); }, // data -> display
+    // yAxis = d3.svg.axis().scale(yScale).orient("left");
+    yAxis = d3.axisLeft(yScale);
 
   // setup fill color
   var cValue = function (d) { return d.cluster; },
-    color = d3.scale.category10();
+    // color = d3.scale.category10();
+    color = d3.scaleOrdinal(d3.schemeCategory10);
 
   // add the graph canvas to the body of the webpage
   var svg = d3.select("#clustering").append("svg")
@@ -166,28 +185,22 @@
     .attr("class", "tooltip")
     .style("opacity", 0);
 
+// Bar Chart Set-up
+var bar_chart_margin = { top: 20, right: 30, bottom: 40, left: 30 },
+bar_width = 960 - bar_chart_margin.left - bar_chart_margin.right,
+bar_height = 500 - bar_chart_margin.top - bar_chart_margin.bottom;
 
 
-  // Bar Chart Set-up
-  var bar_chart_margin = { top: 20, right: 30, bottom: 40, left: 30 },
-    bar_width = 960 - bar_chart_margin.left - bar_chart_margin.right,
-    bar_height = 500 - bar_chart_margin.top - bar_chart_margin.bottom;
+var x = d3.scaleLinear()
+      .domain([0, 100])
+      .range([0, bar_width])
 
-  var x = d3.scale.linear()
-    .range([0, bar_width]);
+var y = d3.scaleBand()
+  .rangeRound([0, bar_height])
+  .padding(0.1)
 
-  var y = d3.scale.ordinal()
-    .rangeRoundBands([0, bar_height], 0.1);
-
-  var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom");
-
-  var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left")
-    .tickSize(0)
-    .tickPadding(6);
+var xAxis = d3.axisBottom(x);
+var yAxis = d3.axisLeft(y).tickSize(0).tickPadding(6);
 </script>
 
 
@@ -208,6 +221,7 @@
 
   var elt = $('input');
   elt.tagsinput({
+    maxTags: 1,
     itemValue: 'song_id',
     itemText: function (song) {
       return song.song_name + ' - ' + song.artist;
@@ -221,6 +235,7 @@
       source: songs.ttAdapter()
     }
   });
+
 
   function loadClustering(song_id, relevant_points) {
     // load data
@@ -258,7 +273,7 @@
       .attr("cx", xMap)
       .attr("cy", yMap)
       .style("fill", function (d) {
-        return color(cValue(d));
+        return "#1f77b4";
       })
       .style("opacity", function (d) {
         if (d['top_10'] == true) {
@@ -274,15 +289,9 @@
         }
       })
       .on("mouseover", function (d) {
-        d3.selectAll('circle').style("r", function (dot) {
-          if (d['top_10'] && dot['top_10']) {
+        d3.select(this).style("r", function (dot) {
+          if (d['top_10']) {
             return 10.0;
-          }
-          else if (d['top_10'] && (d['cluster'] == dot['cluster'])) {
-            return 5.0
-          }
-          else if (d['top_10'] == false && dot['top_10'] == false && (d['cluster'] == dot['cluster'])) {
-            return 5.0;
           }
         });
 
@@ -294,15 +303,9 @@
           .style("top", (d3.event.pageY - 28) + "px");
       })
       .on("mouseout", function (d) {
-        d3.selectAll('circle').style("r", function (dot) {
-          if (d['top_10'] && dot['top_10']) {
+        d3.select(this).style("r", function (dot) {
+          if (d['top_10']) {
             return 8.0;
-          }
-          else if (d['top_10'] && (d['cluster'] == dot['cluster'])) {
-            return 4.0;
-          }
-          else if (d['top_10'] == false && dot['top_10'] == false && (d['cluster'] == dot['cluster'])) {
-            return 4.0;
           }
         });
         tooltip.transition()
@@ -328,6 +331,7 @@
     basedOnElem.appendChild(text);
 
     song_summary_container.appendChild(basedOnElem);
+    song_summary_container.appendChild(document.createElement("br"))
 
 
     var matching_song_ids = [matching_songs[0].song_1, matching_songs[0].song_2, matching_songs[0].song_3, matching_songs[0].song_4, matching_songs[0].song_5, matching_songs[0].song_6, matching_songs[0].song_7, matching_songs[0].song_8, matching_songs[0].song_9, matching_songs[0].song_10];
@@ -375,7 +379,7 @@
 
 
   function createSongStatistics(song_name, artist, song_feature_percentiles) {
-
+    console.log("percentiless", song_feature_percentiles);
     song_feature_percentiles = song_feature_percentiles.slice(-10);
     song_feature_percentiles = song_feature_percentiles.map(function (d) {
       d.value = (d.value - 0.5) * 2;
@@ -400,7 +404,7 @@
       .attr("x", function (d) { console.log("x"); console.log(d.value); console.log(typeof (d.value)); return x(Math.min(0, d.value)); })
       .attr("y", function (d) { return y(d.feature); })
       .attr("width", function (d) { console.log("width"); console.log(d.value); return Math.abs(x(d.value) - x(0)); })
-      .attr("height", y.rangeBand());
+      .attr("height", 30);
 
     svg.append("g")
       .attr("class", "x axis")
@@ -418,22 +422,319 @@
     }
   }
 
+
+  function build_radar_chart(song_id, radar_points) {
+    console.log(song_id);
+    console.log("RADAR_POINTS", radar_points);
+
+    // let feature_names = Object.keys(song_data[0]);
+    // Ordered by mean value 
+    let feature_names = ["energy", "loudness", "danceability", "valence", "tempo", "acousticness", "liveness", "duration_ms", "speechiness"];
+
+    // Reordered so radar chart displays energy on top 
+    // let visual_ordered_names = ["valence", "tempo","acousticness", "liveness", "duration_ms", "speechiness", "energy", "loudness", "danceability"];
+    let visual_ordered_names = ["acousticness", "liveness", "duration_ms", "speechiness", "energy", "loudness", "danceability", "valence", "tempo"];
+    console.log(feature_names);
+
+    // create margins
+    let margin = { left: 20, right: 20, top: 20, bottom: 20 };
+
+    let radar_svg = d3.select("#radar_plot").append("svg")
+      .attr("id", "radarchart")
+      .attr("width", 640)
+      .attr("height", 640);
+
+    // let radar_svg = d3.select("#radarchart");
+    let width = radar_svg.attr("width");
+    let height = radar_svg.attr("height");
+
+    let radar_width = width - margin.left - margin.right;
+    let radar_height = height - margin.top - margin.bottom;
+
+    let radar_plot = radar_svg.append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    function create_circle(radius) {
+      radar_plot.append("circle")
+        .attr("r", radius)
+        .attr("cx", radar_width / 2)
+        .attr("cy", radar_height / 2)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("opacity", 0.15)
+        .style("fill", "lightgrey");
+    }
+
+    const angle_value = 40; // 9 features gives 360 degrees
+    const angle_offset = 10; // keep the top feature vertically-aligned
+
+    // add radar plot circles
+    for (let i = 5; i >= 1; i--) {
+      radius = i * 50;
+      create_circle(radius);
+    }
+
+    // create axes
+    let total = visual_ordered_names.length; // number of features
+
+    let radius_scale = d3.scaleLinear()
+      .domain([0, 1])
+      .range([0, 250])
+
+    let center_x = radar_width / 2;
+    let center_y = radar_height / 2;
+
+    // create axis labels
+    let ticks = [0.2, 0.4, 0.6, 0.8, 1.0];
+
+    ticks.forEach(t =>
+      radar_plot.append("text")
+        .attr("x", 280)
+        .attr("y", 300 - radius_scale(t))
+        .text(t)
+        .style("font-family", "Oxygen")
+        .style("font-size", 12)
+    );
+
+    function create_axis_lines(radius, theta) {
+      radar_plot.append("line")
+        .attr("x1", center_x)
+        .attr("y1", center_y)
+        .attr("x2", center_x + radius * Math.cos(theta * Math.PI / 180))
+        .attr("y2", center_y + radius * Math.sin(theta * Math.PI / 180))
+        .attr("stroke", "black")
+        .attr("opacity", 0.3);
+    }
+
+    let axis_angle = angle_value;
+
+    // creating radial axis lines
+    for (let i = 1; i <= total; i++) {
+      create_axis_lines(265, axis_angle - angle_offset);
+      axis_angle += angle_value;
+    }
+
+    // mapping feature names to angles
+    let feature_angle_dict = {};
+    let feat_angle = angle_value;
+
+    for (let i = 0; i < visual_ordered_names.length; i++) {
+      let feat = visual_ordered_names[i];
+
+      feature_angle_dict[feat] = feat_angle - 10;
+      feat_angle += angle_value;
+    }
+
+    console.log(feature_angle_dict);
+
+    function create_axis_labels(feat_name, theta, radius) {
+      let text_x = center_x + radius * Math.cos(theta * Math.PI / 180);
+      let text_y = center_y + radius * Math.sin(theta * Math.PI / 180);
+
+      radar_plot.append("text")
+        .attr("id", feat_name + "label")
+        .attr("x", text_x - 20)
+        .attr("y", text_y + 5)
+        .text(feat_name)
+        .style("font-family", "Oxygen")
+        .style("font-size", 12);
+    }
+
+    let label_angle = angle_value;
+
+    for (let i = 0; i < visual_ordered_names.length; i++) {
+      feat = visual_ordered_names[i];
+      create_axis_labels(feat, label_angle - angle_offset, 290);
+      label_angle += angle_value;
+    }
+
+    let song_id_point_dict = {};
+
+    function calc_point_coords(radius, theta, song_id) {
+      let cx = center_x + radius * Math.cos(theta * Math.PI / 180);
+      let cy = center_y + radius * Math.sin(theta * Math.PI / 180);
+
+      let coords = { "x": cx, "y": cy };
+
+      if (song_id in song_id_point_dict) {
+        song_id_point_dict[song_id].push(coords);
+      }
+      else {
+        song_id_point_dict[song_id] = [coords];
+      }
+    }
+
+    function plot_point(radius, theta, feat, value, color) {
+      var cx = center_x + radius * Math.cos(theta * Math.PI / 180);
+      var cy = center_y + radius * Math.sin(theta * Math.PI / 180);
+
+      console.log("cx", cx, "cy", cy)
+
+      console.log("Jimmy's radius", radius);
+
+      let text_x = cx - 15;
+      let text_y = cy - 15;
+      let r = 5;
+
+      console.log("text", text_x, text_y)
+      console.log("radarrrr points", radar_points);
+
+      radar_plot.append("circle")
+        .attr("class", "radar_dots")
+        .attr("r", r)
+        .attr("cx", function () { console.log("....", cx); return cx; })
+        .attr("cy", cy)
+        .attr("opacity", 0.6)
+        .style("fill", color)
+
+        .on("mouseover", function () {
+          d3.select(this)
+            .transition().duration(150)
+            .attr("r", 2 * r)
+            .attr("opacity", 1);
+
+          radar_plot.append("text")
+            .attr("id", feat)
+            .attr("x", text_x)
+            .attr("y", text_y)
+            .text(value.toFixed(3))
+            .style("font-family", "Oxygen")
+            .style("font-size", 12);
+
+          d3.select("#" + feat + "label")
+            .transition().duration(150)
+            .style("fill", color)
+        })
+
+        .on("mouseout", function () {
+          d3.select(this)
+            .transition().duration(150)
+            .attr("r", r)
+            .attr("opacity", 0.7);
+
+          d3.select("#" + feat).remove();
+
+          d3.select("#" + feat + "label")
+            .transition().duration(150)
+            .style("fill", "black")
+        });
+    }
+
+    let song_id_arr = [song_id];
+    let colors = ["red"];
+
+    let line = d3.line()
+      .x(d => d.x)
+      .y(d => d.y);
+
+    for (let s = 0; s < song_id_arr.length; s++) {
+      let id = song_id_arr[s];
+
+      for (let i = 0; i < visual_ordered_names.length; i++) {
+        let feat = visual_ordered_names[i];
+
+        for (let d = 0; d < radar_points.length; d++) {
+          let dict = radar_points[d];
+          var value;
+
+          if (dict["song_id"] === id) {
+            value = dict[feat];
+            break;
+          }
+        }
+
+        console.log(feat, value);
+
+        let theta = feature_angle_dict[feat];
+        let radius = radius_scale(value);
+        calc_point_coords(radius, theta, id);
+      }
+
+    }
+
+    let song_id_point_lst = [];
+
+    for (var key in song_id_point_dict) {
+      if (song_id_point_dict.hasOwnProperty(key)) {
+        song_id_point_lst.push([key, song_id_point_dict[key]]);
+      }
+    }
+
+    // add the first point to the end to complete shape
+    for (let i = 0; i < song_id_point_lst.length; i++) {
+      let fst_point = song_id_point_lst[i][1][0];
+      song_id_point_lst[i][1].push(fst_point);
+    }
+
+    // Drawing path through each set of points
+    for (let i = 0; i < song_id_point_lst.length; i++) {
+      let d = song_id_point_lst[i][1]; // array of point objects
+      let color = colors[i];
+
+      radar_plot.append("path")
+        .data(d)
+        .attr("class", "plot_block")
+        .attr("d", line(d))
+        .attr("stroke", color)
+        .attr("stroke-width", 2)
+        .attr("stroke-opacity", 1)
+        .attr("fill", color)
+        .attr("opacity", 0.5)
+    }
+
+
+    // iterate through the two songs and plot points on top of fill
+    // so that they can be hovered over
+    for (let s = 0; s < song_id_arr.length; s++) {
+      let id = song_id_arr[s];
+      let color = colors[s];
+
+      for (let i = 0; i < visual_ordered_names.length; i++) {
+        let feat = visual_ordered_names[i];
+
+        for (let d = 0; d < radar_points.length; d++) {
+          let dict = radar_points[d]
+
+          if (dict["song_id"] === id) {
+            value = dict[feat];
+            break;
+          }
+        }
+
+        let theta = feature_angle_dict[feat];
+        let radius = radius_scale(value);
+
+        console.log("radar points", radar_points)
+        plot_point(radius, theta, feat, value, color);
+      }
+
+    }
+  }
+
   function search() {
     var song_ids = document.getElementsByTagName("input")[2].value;
     song_ids = String(song_ids)
     d3.selectAll(".dot").remove();
     d3.select("#song_summary").selectAll("*").remove();
+    d3.select("#radarchart").remove();
     $.ajax({
       url: '/songSearchHandler',
       data: JSON.stringify({ 'song_ids': song_ids }),
       contentType: "application/json",
       type: 'POST',
       success: function (response) {
+        // console.log(response);
         value = JSON.parse(response)
         foo = JSON.parse(value.relevant_points.replace(/\bNaN\b/g, "null"));
+        console.log("FOO", foo)
+        console.log("...");
+        foo_radar = JSON.parse(value.radar_points.replace(/\bNaN\b/g, "null"));
+        console.log("foo_radara", foo_radar)
         loadClustering(value.id, foo);
         createSongSummary(value.id, foo);
         createSongStatistics(value.song_name, value.artist, JSON.parse(value.percentile_data));
+        build_radar_chart(value.id, foo_radar);
+
       },
       error: function (error) {
         console.log("ERROR")
@@ -441,6 +742,7 @@
       }
     });
   }
+
 </script>
 
 {% endblock %}

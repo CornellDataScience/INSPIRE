@@ -6,18 +6,24 @@ import spotipy
 import spotipy.util as util
 app = Flask(__name__)
 
-# Global Variables
-# Percentile df
+
+normalized_csv_df = None
 percentile_df = None
 token = None
 sp = None
 # Route to home page
+
 @app.route('/search_page', methods=['GET', 'POST'])
 def search_page():
-	scope = 'playlist-read-private playlist-read-collaborative user-library-read user-read-recently-played user-top-read'
-	username = 'jchen13542'
+	global normalized_csv_df
 	global token
 	global sp
+	SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+	csv_url = os.path.join(SITE_ROOT, "static/", "songs_with_recommendations_and_2d_proj_60k.csv")
+	csv_url = os.path.join(SITE_ROOT, "static/", "normalized_songs_2.csv")
+	normalized_csv_df = pd.read_csv(csv_url)
+	scope = 'playlist-read-private playlist-read-collaborative user-library-read user-read-recently-played user-top-read'
+	username = 'jchen13542'
 	token = util.prompt_for_user_token(username,scope,client_id=os.environ['SPOTIPY_CLIENT_ID'],client_secret=os.environ['SPOTIPY_CLIENT_SECRET'],redirect_uri=os.environ['SPOTIPY_REDIRECT_URI'])
 	sp = spotipy.Spotify(auth=token)
 	return render_template('search_page.html')
@@ -43,6 +49,26 @@ def get_relevant_points(song_id, df):
 	relevant_rows["top_10"] = np.where(relevant_rows['song_id'].isin(relevant_points), True, False)
 	return relevant_rows
 
+
+def get_relevant_song_attr(song_id):
+	df = normalized_csv_df
+	df1 = df[['song_id','cluster','song_1','song_2','song_3','song_4','song_5','song_6','song_7','song_8','song_9','song_10', \
+		"energy", "loudness", "danceability", "valence", "tempo","acousticness", "liveness", "duration_ms", "speechiness"]]
+
+	row = df1.loc[df1['song_id'] == song_id]
+	print(row)
+	print(row['song_id'].values[0])
+
+	relevant_points = [row['song_id'].values[0], row['song_1'].values[0], row['song_2'].values[0], row['song_3'].values[0], row['song_4'].values[0], row['song_5'].values[0], row['song_6'].values[0], \
+		row['song_7'].values[0], row['song_8'].values[0], row['song_9'].values[0], row['song_10'].values[0]]
+
+	print(row)
+	mask = df1['song_id'].isin(relevant_points)
+
+	df1 = df1.loc[mask]
+
+	return df1
+
 def precompute_percentages(df):
 	global percentile_df
 	df_features = df[['song_id', 'song_name', 'artist', 'danceability', 'energy', 'loudness', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'duration_ms']]
@@ -57,19 +83,26 @@ def get_percentiles(song_id):
 	artist = row['artist'].values[0]
 	return row, song_name, artist
 
+
 @app.route('/songSearchHandler', methods=['GET', 'POST'])
 def songSearchHandler():
 	song_id = request.json
 	song_id = list(song_id.values())[0]
 	SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
 	csv_url = os.path.join(SITE_ROOT, "static/", "songs_with_recommendations_and_2d_proj_60k.csv")
+	df = get_relevant_points(song_id, pd.read_csv(csv_url))
+
+	df_radar = get_relevant_song_attr(song_id)
+
+	radar_data = df_radar.to_dict(orient='records')
+	radar_data = json.dumps(radar_data, indent=2)
+
+	clustering_data = df.to_dict(orient='records')
+	clustering_data = json.dumps(clustering_data, indent=2)
+
 	csv_data = pd.read_csv(csv_url)
 	if percentile_df is None:
 		precompute_percentages(csv_data)
-	
-	df = get_relevant_points(song_id, csv_data)
-	clustering_data = df.to_dict(orient='records')
-	clustering_data = json.dumps(clustering_data, indent=2)
 
 	statistics_df, song_name, artist = get_percentiles(song_id)
 	statistics_df_t = statistics_df.T
@@ -82,7 +115,8 @@ def songSearchHandler():
 		'relevant_points': clustering_data,
 		'percentile_data': statistics_data,
 		'song_name': song_name,
-		'artist': artist})
+		'artist': artist,
+    'radar_points' : radar_data})
 
 def getPairwiseComparisonData(song_id_1, song_id_2, df):
 	rows = df.loc[df['song_id'].isin([song_id_1, song_id_2])]

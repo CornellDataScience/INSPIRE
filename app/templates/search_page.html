@@ -192,6 +192,8 @@ function loadClustering(song_id, relevant_points) {
       // don't want dots overlapping axis, so add in buffer to data domain
       xScale.domain([d3.min(data, xValue)-0.01, d3.max(data, xValue)+0.01]);
       yScale.domain([d3.min(data, yValue)-0.01, d3.max(data, yValue)+0.01]);
+
+      console.log("RELEVANT POINTS", data);
     
     
       // draw dots
@@ -379,7 +381,7 @@ function build_radar_chart(song_id, radar_points) {
   let height = radar_svg.attr("height");
 
   let radar_width = width - margin.left - margin.right;
-        let radar_height = height - margin.top - margin.bottom;
+  let radar_height = height - margin.top - margin.bottom;
 
   let radar_plot = radar_svg.append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -462,12 +464,12 @@ function build_radar_chart(song_id, radar_points) {
     let text_y = center_y + radius * Math.sin(theta * Math.PI / 180);
 
     radar_plot.append("text")
-            .attr("id", feat_name + "label")
-            .attr("x", text_x - 20)
-            .attr("y", text_y + 5)
-            .text(feat_name)
-            .style("font-family", "Oxygen")
-            .style("font-size", 12);
+      .attr("id", feat_name + "label")
+      .attr("x", text_x - 20)
+      .attr("y", text_y + 5)
+      .text(feat_name)
+      .style("font-family", "Oxygen")
+      .style("font-size", 12);
   }
 
   let label_angle = angle_value;
@@ -495,8 +497,10 @@ function build_radar_chart(song_id, radar_points) {
   }
 
   function plot_point(radius, theta, feat, value, color) {
-    let cx = center_x + radius * Math.cos(theta * Math.PI / 180);
-    let cy = center_y + radius * Math.sin(theta * Math.PI / 180);
+    var cx = center_x + radius * Math.cos(theta * Math.PI / 180);
+    var cy = center_y + radius * Math.sin(theta * Math.PI / 180);
+
+    console.log("cx", cx, "cy", cy)
 
     console.log("Jimmy's radius", radius);
 
@@ -505,13 +509,12 @@ function build_radar_chart(song_id, radar_points) {
     let r = 5;
 
     console.log("text", text_x, text_y)
+    console.log("radarrrr points", radar_points);
 
-    radar_plot.selectAll(".radar_dots")
-      .data(radar_points)
-      .enter().append("circle")
+    radar_plot.append("circle")
       .attr("class", "radar_dots")
       .attr("r", r)
-      .attr("cx", cx)
+      .attr("cx", function() {console.log("....", cx); return cx;})
       .attr("cy", cy)
       .attr("opacity", 0.6)
       .style("fill", color)
@@ -564,7 +567,6 @@ function build_radar_chart(song_id, radar_points) {
 
       for (let d = 0; d < radar_points.length; d++) {
         let dict = radar_points[d];
-        console.log("DICTTTTT")
         var value;
 
         if (dict["song_id"] === id) {
@@ -631,16 +633,10 @@ function build_radar_chart(song_id, radar_points) {
         }
       }
 
-
       let theta = feature_angle_dict[feat];
       let radius = radius_scale(value);
 
-      console.log("VALUE", value);
-      console.log("THETA", theta);
-      console.log("RADIUS", radius);
-      console.log("feat_ang_dict", feature_angle_dict);
-
-
+      console.log("radar points", radar_points)
       plot_point(radius, theta, feat, value, color);
     }
 

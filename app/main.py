@@ -5,6 +5,9 @@ import numpy as np
 from wtforms import TextField, Form
 app = Flask(__name__)
 
+
+
+normalized_csv_df = None
 # Route to home page
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/home', methods=['GET', 'POST'])
@@ -16,6 +19,9 @@ def show_home():
 	clustering_data = df.to_dict(orient='records')
 	clustering_data = json.dumps(clustering_data, indent=2)
 	data = {'clustering_data': clustering_data}
+	global normalized_csv_df
+	csv_url = os.path.join(SITE_ROOT, "static/", "normalized_songs_2.csv")
+	normalized_csv_df = pd.read_csv(csv_url)
 	return render_template('search_page.html', clustering_data = clustering_data)
 
 def get_relevant_points(song_id, df):
@@ -45,7 +51,8 @@ def get_relevant_points(song_id, df):
 	#return df
 	return relevant_rows
 
-def get_relevant_song_attr(song_id, df):
+def get_relevant_song_attr(song_id):
+	df = normalized_csv_df
 	df1 = df[['song_id','cluster','song_1','song_2','song_3','song_4','song_5','song_6','song_7','song_8','song_9','song_10', \
 		"energy", "loudness", "danceability", "valence", "tempo","acousticness", "liveness", "duration_ms", "speechiness"]]
 
@@ -73,7 +80,7 @@ def songSearchHandler():
 	csv_url = os.path.join(SITE_ROOT, "static/", "songs_with_recommendations_and_2d_proj_60k.csv")
 	df = get_relevant_points(song_id, pd.read_csv(csv_url))
 
-	df_radar = get_relevant_song_attr(song_id, pd.read_csv(csv_url))
+	df_radar = get_relevant_song_attr(song_id)
 
 	radar_data = df_radar.to_dict(orient='records')
 	radar_data = json.dumps(radar_data, indent=2)

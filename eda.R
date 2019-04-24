@@ -10,11 +10,17 @@ ggplot(spore) +
   theme_classic() + 
   xlab("Loudness") + 
   ylab("Frequency") +
+  labs(title = "Distribution of Loudness") + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
   coord_flip()
 
 ggplot(spore) + 
   geom_histogram(aes(x = tempo), binwidth = .5, colour = "#99d8c9", fill = "#99d8c9") + 
-  theme_classic() 
+  theme_classic()  + 
+  xlab("Tempo") + 
+  ylab("Frequency") +
+  labs(title = "Distribution of Tempo") + 
+  theme(plot.title = element_text(hjust = 0.5)) 
 
 quant_spore$tempo <- spore$tempo/max(spore$tempo)
 quant_spore$loudness <- spore$loudness/min(spore$loudness)

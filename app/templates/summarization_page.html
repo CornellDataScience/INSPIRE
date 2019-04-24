@@ -3,6 +3,19 @@
 
 <head>
     <link href="./static/css/custom.css" rel="stylesheet">
+    <link href="../static/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic'
+        rel='stylesheet' type='text/css'>
+
+    <!-- Plugin CSS -->
+    <link href="../static/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
+
+    <!-- Theme CSS - Includes Bootstrap -->
+    <link href="../static/css/creative.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Oxygen" rel="stylesheet">
 </head>
 
 <style>
@@ -43,7 +56,7 @@
         margin: 5px auto 5px auto;
     }
 
-/* 
+    /* 
     ::-webkit-scrollbar {
     } */
 
@@ -52,7 +65,7 @@
     }
 
     .playlist-name {
-        
+
         color: white;
         font-weight: 800;
         font-size: 16px;
@@ -63,7 +76,7 @@
         margin: 0px auto 10px auto;
         cursor: pointer;
         border-width: 10px;
-        border-style:solid;
+        border-style: solid;
         border-color: black;
     }
 
@@ -93,10 +106,10 @@
         display: flex;
         flex-direction: row;
         justify-content: space-around;
-        padding:5px;
+        padding: 5px;
     }
 
-    #flex_container > div{
+    #flex_container>div {
         margin: 5px;
     }
 
@@ -104,6 +117,7 @@
         font-weight: 600;
         margin-top: 50px;
     }
+
     .playlist_analysis_text {
         color: white;
         font-weight: 600;
@@ -113,12 +127,35 @@
 </style>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
+
 <body>
+        <nav class="navbar navbar-expand-lg navbar-light fixed-top py-3" id="mainNav">
+                <div class="container">
+                  <a class="navbar-brand js-scroll-trigger" href="#page-top">INSPIRE</a>
+                  <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                  </button>
+                  <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav ml-auto my-2 my-lg-0">
+                      <li class="nav-item">
+                        <a class="nav-link js-scroll-trigger" href="{{ url_for('homePage') }}">Home</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link js-scroll-trigger" href="{{ url_for('search_page') }}">Features</a>
+                      </li>
+            
+                      <li class="nav-item">
+                        <a class="nav-link js-scroll-trigger" href="https://cornelldata.science/">Cornell Data Science</a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </nav>
 
     <h1>
         Select a playlist to analyze its features
     </h1>
-    <div id = "flex_container">
+    <div id="flex_container">
         <div id="playlist_retriever"></div>
     </div>
 </body>
@@ -132,7 +169,7 @@
 
     function generateTrackViewForPlaylist(track_ids, playlist_name) {
         console.log(document.getElementById("playlist_track_view"));
-        if(document.getElementById("playlist_track_view") != null) {
+        if (document.getElementById("playlist_track_view") != null) {
             document.getElementById("playlist_track_view").remove();
         }
         var playlist_retriever_container = document.createElement("div");
@@ -187,7 +224,7 @@
         return playlist_component;
     }
 
-    function createPlaylistSelector(playlist_data) {        
+    function createPlaylistSelector(playlist_data) {
         let playlist_selector_container = document.getElementById("playlist_retriever");
 
         let playlist_selector_scroller = document.createElement("div");

@@ -13,7 +13,6 @@ token = None
 sp = None
 # Route to home page
 @app.route('/', methods=['GET', 'POST'])
-@app.route('/home', methods=['GET', 'POST'])
 def show_home():
 	scope = 'playlist-read-private playlist-read-collaborative user-library-read user-read-recently-played user-top-read'
 	username = 'jchen13542'
@@ -133,6 +132,10 @@ def playlistTrackRetriever():
 @app.route('/summarizationPage', methods = ['GET', 'POST'])
 def summarizationPage():
 	return render_template('summarization_page.html')
+
+@app.route('/homePage', methods = ['GET', 'POST'])
+def homePage():
+	return render_template('index.html')
 
 
 if __name__ == "__main__":

@@ -25,7 +25,8 @@
     margin: 0;
     font: 12px sans-serif;
     font-weight:500;
-    background-image: linear-gradient(120deg, #1DB954, #191414);
+    /* background-image: linear-gradient(120deg, #1DB954, #191414); */
+    background-color: #58D68D;
     -webkit-background-size: cover;
     -moz-background-size: cover;
     -o-background-size: cover;
@@ -35,11 +36,15 @@
   }
 
   .player-scrollbar {
-    height: 400px;
-    width: 412px;
-    margin: auto;
-    text-align: center;
-    padding: 0;
+    overflow-y: scroll;
+    width: 100%;
+    height: 99%;
+    overflow-y: scroll;
+    border-color: white;
+    border-width: 30px;
+    border-style: solid;
+    background-color: white;
+
   }
 
   ::-webkit-scrollbar {
@@ -59,10 +64,18 @@
 
   #clustering,
   #song_summary,
+  #song_recommendations,
   #song_statistics,
   #radar_plot {
     margin: auto;
     text-align: center;
+  }
+
+  #song_recommendations {
+    height: 400px;
+    width: 460px;
+    margin: 0 auto;
+    overflow: hidden;
   }
 
   .based-on {
@@ -71,11 +84,11 @@
   }
 
   .bar--positive {
-    fill: steelblue;
+    fill: #6666ff;
   }
 
   .bar--negative {
-    fill: darkorange;
+    fill:  #ff6600;
   }
 
   .axis text {
@@ -133,6 +146,8 @@
   <br><br>
 
   <div id="song_summary"></div>
+
+  <div id = "song_recommendations"></div>
   <br><br>
   <div id="song_statistics"></div>
 </body>
@@ -186,7 +201,7 @@
     .style("opacity", 0);
 
 // Bar Chart Set-up
-var bar_chart_margin = { top: 20, right: 30, bottom: 40, left: 30 },
+var bar_chart_margin = { top: 100, right: 30, bottom: 40, left: 30 },
 bar_width = 960 - bar_chart_margin.left - bar_chart_margin.right,
 bar_height = 500 - bar_chart_margin.top - bar_chart_margin.bottom;
 
@@ -326,9 +341,8 @@ var yAxis = d3.axisLeft(y).tickSize(0).tickPadding(6);
     });
     song_name = matching_songs[0].song_name;
     song_artist = matching_songs[0].artist;
-    var str = "Based on the song " + song_name + " by " + song_artist + " you are suggested: "
-    var text = document.createTextNode(str);
-    basedOnElem.appendChild(text);
+    var str = "<span style = 'color: white'> Based on the song </span>" + "<span style = 'color: black'>" + song_name +  "</span>" + "<span style = 'color: black'> by </span>" + "<span style = 'color: black'>" + song_artist +  "</span>" + "<span style = 'color:white'> you are suggested: </span>"
+    basedOnElem.innerHTML = str;
 
     song_summary_container.appendChild(basedOnElem);
     song_summary_container.appendChild(document.createElement("br"))
@@ -373,8 +387,8 @@ var yAxis = d3.axisLeft(y).tickSize(0).tickPadding(6);
       iframe.allow = "encrypted-media";
       player_container.appendChild(iframe);
     }
-
-    song_summary_container.appendChild(player_container);
+    song_rec_container = document.getElementById("song_recommendations");
+    song_rec_container.appendChild(player_container);
   }
 
 
@@ -387,7 +401,7 @@ var yAxis = d3.axisLeft(y).tickSize(0).tickPadding(6);
     })
     //song_feature_percentiles = {acousticness: 80, instrumentalness: 25, energy: -20, danceability: -50};
     console.log(song_feature_percentiles);
-    var svg = d3.select("body").append("svg")
+    var svg = d3.select("body").select("#song_statistics").append("svg")
       .attr("width", bar_width + bar_chart_margin.left + bar_chart_margin.right)
       .attr("height", bar_height + bar_chart_margin.top + bar_chart_margin.bottom)
       .append("g")
@@ -404,7 +418,7 @@ var yAxis = d3.axisLeft(y).tickSize(0).tickPadding(6);
       .attr("x", function (d) { console.log("x"); console.log(d.value); console.log(typeof (d.value)); return x(Math.min(0, d.value)); })
       .attr("y", function (d) { return y(d.feature); })
       .attr("width", function (d) { console.log("width"); console.log(d.value); return Math.abs(x(d.value) - x(0)); })
-      .attr("height", 30);
+      .attr("height", 25);
 
     svg.append("g")
       .attr("class", "x axis")
@@ -621,7 +635,7 @@ var yAxis = d3.axisLeft(y).tickSize(0).tickPadding(6);
     }
 
     let song_id_arr = [song_id];
-    let colors = ["red"];
+    let colors = ["#3377ff"];
 
     let line = d3.line()
       .x(d => d.x)

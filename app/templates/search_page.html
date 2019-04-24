@@ -6,11 +6,12 @@
 
 
 <style>
+  
     body {
       height: 100%;
       margin: 0;
       font: 11px sans-serif;
-      background-image: linear-gradient(120deg, #D3D3D3, #191414); 
+      background-image: linear-gradient(120deg, #1DB954, #191414); 
         -webkit-background-size: cover;
         -moz-background-size: cover;
         -o-background-size: cover;
@@ -19,41 +20,37 @@
     background-attachment: fixed;
     }
 
-    #style-1::-webkit-scrollbar-track
-  {
-    box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-    border-radius: 10px;
+
+  #playlist_retriever {
+    
   }
 
-  #style-1::-webkit-scrollbar
-  {
-    width: 12px;
-  }
-
-  #style-1::-webkit-scrollbar-thumb
-  {
-    border-radius: 10px;
-    box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-    background-color: #555;
-  }
-
-  .player-scrollbar
-  {
+  .player-scrollbar{
     height: 400px;
     width: 412px;
-    overflow-y: scroll;
     margin: auto;
     text-align: center;
   }
 
 
+  #playlist_track_view  {
+    height: 600px;
+    background-color: blue;
+    width: 400px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
 
-    .axis path,
-    .axis line {
-      fill: none;
-      stroke: #000;
-      shape-rendering: crispEdges;
-    }
+  .player-scrollbar-inner {
+    width: 100%;
+    height: 99%;
+    overflow-y: scroll;
+  }
+
+
+  ::-webkit-scrollbar {
+  display: none;
+  }
     
     .dot {
       stroke: #000;
@@ -66,7 +63,7 @@
       pointer-events: none;
     }
 
-    #clustering, #song_summary {
+    #clustering, #song_summary, #song_statistics {
       margin: auto;
       text-align: center;
     }
@@ -75,6 +72,27 @@
       font-size: 24pt;
       color: white;
     }
+
+  
+
+.bar--positive {
+  fill: steelblue;
+}
+
+.bar--negative {
+  fill: darkorange;
+}
+
+.axis text {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
     </style>
 
 <script src="https://d3js.org/d3.v3.min.js"></script>
@@ -87,16 +105,25 @@
         </div>
     </div>
 
-    <div id = "clustering">
-    </div>
+    <div id = "clustering"></div>
 
-    <div id = "song_summary">
+    <div id = "song_summary"></div>
+
+    <div id = "song_statistics"></div>
+
+    <div id = "playlist_retriever">
+      <button type="button" onclick="playlistRetriever()">Playlist Retriever </button>
+      <div id = "playlist_track_view">
+
       </div>
+    </div>
 
 </body>
 
 <script>
-    var margin = {top: 20, right: 20, bottom: 30, left: 40},
+
+    // Clustering setup
+    var margin = {top: 30, right: 0, bottom: 30, left: 0},
         width = 960 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
     
@@ -110,14 +137,12 @@
     // setup x 
     var xValue = function(d) { return d.x;}, // data -> value
         xScale = d3.scale.linear().range([0, width]), // value -> display
-        xMap = function(d) { return xScale(xValue(d));}, // data -> display
-        xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+        xMap = function(d) { return xScale(xValue(d));}; // data -> display
     
     // setup y
     var yValue = function(d) { return d.y;}, // data -> value
         yScale = d3.scale.linear().range([height, 0]), // value -> display
-        yMap = function(d) { return yScale(yValue(d));}, // data -> display
-        yAxis = d3.svg.axis().scale(yScale).orient("left");
+        yMap = function(d) { return yScale(yValue(d));}; // data -> display
     
     // setup fill color
     var cValue = function(d) { return d.cluster;},
@@ -134,6 +159,29 @@
     var tooltip = d3.select("body").append("div")
         .attr("class", "tooltip")
         .style("opacity", 0);
+
+
+
+    // Bar Chart Set-up
+    var bar_chart_margin = {top: 20, right: 30, bottom: 40, left: 30},
+    bar_width = 960 - bar_chart_margin.left - bar_chart_margin.right,
+    bar_height = 500 - bar_chart_margin.top - bar_chart_margin.bottom;
+
+var x = d3.scale.linear()
+    .range([0, bar_width]);
+
+var y = d3.scale.ordinal()
+    .rangeRoundBands([0, bar_height], 0.1);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .tickSize(0)
+    .tickPadding(6);
     </script>
 
 
@@ -174,6 +222,8 @@ function loadClustering(song_id, relevant_points) {
       data = data.filter(function(song) {
         return song['top_10'] == true;
       });
+
+      console.log(relevant_points);
 
       // change string (from CSV) into number format
       data.forEach(function(d) {
@@ -252,11 +302,9 @@ function loadClustering(song_id, relevant_points) {
               tooltip.transition()
                    .duration(500)
                    .style("opacity", 0);
-          });
-    
-      
-    
+          });   
 }
+
 function createSongSummary(song_id, points) {
   var song_summary_container = document.getElementById ("song_summary");
   console.log(song_summary_container);
@@ -282,13 +330,6 @@ function createSongSummary(song_id, points) {
   });
   var matching_song_names = []
   var matching_song_artists = []
-  // var matching_song_acousticness = []
-  // var matching_song_danceability = []
-  // var matching_song_energy = []
-  // var matching_song_instrumentalness = []
-  // var matching_song_loudness = []
-  // var matching_song_tempo = []
-  // var matching_song_speechiness = []
 
 
   for(i = 0; i < points.length; i++) {
@@ -296,13 +337,6 @@ function createSongSummary(song_id, points) {
     if(matching_song_ids.indexOf(song.song_id) > -1) {
       matching_song_names.push(song.song_name);
       matching_song_artists.push(song.artist);
-      // matching_song_acousticness.push(song.acousticness);
-      // matching_song_danceability.push(song.danceability);
-      // matching_song_energy.push(song.energy);
-      // matching_song_instrumentalness.push(song.instrumentalness);
-      // matching_song_loudness.push(song.loudness);
-      // matching_song_tempo.push(song.tempo);
-      // matching_song_speechiness.push(song.speechiness);
     }
   }
   var meanAcousticness = d3.mean(matching_song_data, function(d) { return d.acousticness;});
@@ -319,7 +353,6 @@ function createSongSummary(song_id, points) {
   song_previews = []
   var player_container = document.createElement("div");
   player_container.className = "player-scrollbar";
-  player_container.id= "style-1";
   for(i = 0; i < matching_song_ids.length; i++) {
     var iframe = document.createElement('iframe');
     iframe.src = "https://open.spotify.com/embed/track/" + matching_song_ids[i];
@@ -332,17 +365,90 @@ function createSongSummary(song_id, points) {
   }
 
   song_summary_container.appendChild(player_container);
+}
 
 
-  // var str2 = "";
-  // for(i = 0; i < matching_song_names.length; i++) {
-  //   var para2 = document.createElement("p")
-  //   para2.className = "summary";
-  //   var str2 = matching_song_names[i] + " - " + matching_song_artists[i];
-  //   var text2 = document.createTextNode(str2);
-  //   para2.appendChild(text2);
-  //   container.appendChild(para2);
-  // }
+function createSongStatistics(song_name, artist, song_feature_percentiles) {
+
+  song_feature_percentiles = song_feature_percentiles.slice(-10);
+  song_feature_percentiles = song_feature_percentiles.map(function(d) {
+    d.value = (d.value - 0.5)*2;
+    return d;
+  })
+  //song_feature_percentiles = {acousticness: 80, instrumentalness: 25, energy: -20, danceability: -50};
+  console.log(song_feature_percentiles);
+  var svg = d3.select("body").append("svg")
+    .attr("width", bar_width + bar_chart_margin.left + bar_chart_margin.right)
+    .attr("height", bar_height + bar_chart_margin.top + bar_chart_margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + bar_chart_margin.left + "," + bar_chart_margin.top + ")");
+
+  x.domain([d3.min(song_feature_percentiles, function(d) {return d.value;}), d3.max(song_feature_percentiles, function(d) {return d.value;})]);
+  y.domain(song_feature_percentiles.map(function(d) { return d.feature; }));
+
+
+  svg.selectAll(".bar")
+      .data(song_feature_percentiles)
+    .enter().append("rect")
+      .attr("class", function(d) { return "bar bar--" + (d.value < 0 ? "negative" : "positive"); })
+      .attr("x", function(d) { console.log("x"); console.log(d.value); console.log(typeof(d.value)); return x(Math.min(0, d.value)); })
+      .attr("y", function(d) { return y(d.feature); })
+      .attr("width", function(d) {console.log("width"); console.log(d.value); return Math.abs(x(d.value) - x(0)); })
+      .attr("height", y.rangeBand());
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + bar_height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + x(0) + ",0)")
+      .call(yAxis);
+
+  function type(d) {
+    d.value = +d.value;
+    return d;
+  }
+}
+
+// Called whenever you click on a playlist name
+function playlistOnClick(playlist_id) {
+  playlistTrackRetriever(playlist_id);
+}
+
+function generateTrackViewForPlaylist(track_ids) {
+  var playlist_retriever_container = document.getElementById("playlist_track_view");
+  console.log("generate track view for playlist", track_ids);
+  song_previews = []
+  var player_container = document.createElement("div");
+  player_container.className = "player-scrollbar-inner";
+  for(i = 0; i < track_ids.length; i++){
+    let track_id = track_ids[i];
+    var iframe = document.createElement('iframe');
+    iframe.src = "https://open.spotify.com/embed/track/" + track_id;
+    iframe.width = "400";
+    iframe.height = "80";
+    iframe.frameBorder = "0";
+    iframe.allowtransparency = "true";
+    iframe.allow = "encrypted-media";
+    player_container.appendChild(iframe);
+  }
+  playlist_retriever_container.append(player_container);
+
+  console.log("finished generating tracks2");
+}
+
+function createPlaylistSelector(playlist_data) {
+  let playlist_selector_container = document.getElementById("playlist_retriever");
+  for(i = 0; i < playlist_data.length; i++) {
+
+    let playlist = playlist_data[i];
+    let playlist_text = document.createElement("div");
+    playlist_text.onclick = function() {playlistOnClick(playlist.playlist_id);};
+    playlist_text.innerHTML = playlist.playlist_name;
+    playlist_selector_container.appendChild(playlist_text);
+  }
 }
 
 function search(){
@@ -360,7 +466,7 @@ function search(){
               foo = JSON.parse(value.relevant_points.replace(/\bNaN\b/g, "null"));
               loadClustering(value.id, foo);
               createSongSummary(value.id, foo);
-
+              createSongStatistics(value.song_name, value.artist, JSON.parse(value.percentile_data));
             },
             error: function(error) {
               console.log("ERROR")
@@ -368,6 +474,44 @@ function search(){
             }
         });
 }
+
+function playlistRetriever() {
+  $.ajax({
+    url: '/playlistRetriever',
+    contentType: "application/json",
+    type: 'POST',
+    success: function(response) {
+      response = JSON.parse(response);
+      console.log(response);
+      createPlaylistSelector(response);
+      
+    },
+    error: function(error) {
+      console.log("ERROR IN PLAYLIST RETRIEVER")
+    }
+  });
+}
+
+function playlistTrackRetriever(playlist_id) {
+  $.ajax({
+    url: '/playlistTrackRetriever',
+    data: JSON.stringify({'playlist_id':playlist_id}),
+    contentType: "application/json",
+    type: 'POST',
+    success: function(response) {
+      response = JSON.parse(response);
+      console.log(response);
+
+      generateTrackViewForPlaylist(response.playlist_track_ids);
+      console.log("finished generating tracks");
+
+    },
+    error: function(error) {
+      console.log("ERROR IN PLAYLIST TRACK RETRIEVER");
+    }
+  });
+}
+
 </script>
 
 {% endblock %}

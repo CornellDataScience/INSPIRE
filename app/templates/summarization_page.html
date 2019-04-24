@@ -20,7 +20,7 @@
     }
 
     #playlist_track_view {
-        height: 600px;
+        height: 400px;
         background-color: blue;
         width: 400px;
         margin: 0 auto;
@@ -43,9 +43,7 @@
 <body>
     <div id="playlist_retriever">
         <button type="button" onclick="playlistRetriever()">Playlist Retriever </button>
-        <div id="playlist_track_view">
-
-        </div>
+        
     </div>
 </body>
 
@@ -57,7 +55,13 @@
     }
 
     function generateTrackViewForPlaylist(track_ids) {
-        var playlist_retriever_container = document.getElementById("playlist_track_view");
+        console.log(document.getElementById("playlist_track_view"));
+        if(document.getElementById("playlist_track_view") != null) {
+            document.getElementById("playlist_track_view").remove();
+        }
+        var playlist_retriever_container = document.createElement("div");
+        playlist_retriever_container.id = "playlist_track_view";
+
         console.log("generate track view for playlist", track_ids);
         song_previews = []
         var player_container = document.createElement("div");
@@ -74,6 +78,15 @@
             player_container.appendChild(iframe);
         }
         playlist_retriever_container.append(player_container);
+        var body = document.getElementsByTagName("body")[0];
+        body.appendChild(playlist_retriever_container);
+    }
+
+    function createPlaylistComponent(playlist) {
+        let playlist_component = document.createElement("div");
+        playlist_component.className = "playlist_component";
+        playlist_component.onclick = function () { playlistOnClick(playlist.playlist_id); };
+        return playlist_component;
     }
 
     function createPlaylistSelector(playlist_data) {
@@ -84,7 +97,7 @@
             let playlist_text = document.createElement("div");
             playlist_text.onclick = function () { playlistOnClick(playlist.playlist_id); };
             playlist_text.innerHTML = playlist.playlist_name;
-            playlist_selector_container.appendChild(playlist_text);
+            playlist_selector_container.appendChild(createPlaylistComponent(playlist));
         }
     }
 
@@ -95,7 +108,7 @@
             type: 'POST',
             success: function (response) {
                 response = JSON.parse(response);
-                console.log(response);
+                console.log("playlist", response);
                 createPlaylistSelector(response);
 
             },

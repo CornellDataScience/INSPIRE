@@ -12,8 +12,8 @@ percentile_df = None
 token = None
 sp = None
 # Route to home page
-@app.route('/', methods=['GET', 'POST'])
-def show_home():
+@app.route('/search_page', methods=['GET', 'POST'])
+def search_page():
 	scope = 'playlist-read-private playlist-read-collaborative user-library-read user-read-recently-played user-top-read'
 	username = 'jchen13542'
 	global token
@@ -105,10 +105,13 @@ def radioPlot():
 def playlistRetriever():
 	playlists = sp.current_user_playlists()
 	playlist_data = []
+	print("aaaa", playlists)
 	for playlist in playlists['items']:
+		playlist_image = playlist['images'][0]['url']
+		print(playlist_image)
 		playlist_id = playlist['id']
 		playlist_name = playlist['name']
-		playlist_data.append({'playlist_id': playlist_id, 'playlist_name': playlist_name})
+		playlist_data.append({'playlist_id': playlist_id, 'playlist_name': playlist_name, 'playlist_url': playlist_image})
 
 	print(playlist_data)
 	return json.dumps(
@@ -118,25 +121,35 @@ def playlistRetriever():
 @app.route('/playlistTrackRetriever', methods = ['GET', 'POST'])
 def playlistTrackRetriever():
 	playlist_track_ids = []
-	print("ASDFKL;DFJFK;LDJFKDJKDFDFDFJAJLFJSJSFLSJLSJFLJLSFSFDFDFDF")
 	playlist_id = list(request.json.values())[0]
 	print(sp.me())
 	results = sp.user_playlist('1226629431', playlist_id, fields = 'tracks,next,name')
+	print("bbbbb", results)
 	for track in results['tracks']['items']:
 		if track != None and track['track'] != None:
 			track_id = track['track']['id']
 			playlist_track_ids.append(track_id)
-	print(playlist_track_ids)
 	return json.dumps( {'playlist_track_ids': playlist_track_ids})
 	
 @app.route('/summarizationPage', methods = ['GET', 'POST'])
 def summarizationPage():
+	scope = 'playlist-read-private playlist-read-collaborative user-library-read user-read-recently-played user-top-read'
+	username = 'jchen13542'
+	global token
+	global sp
+	token = util.prompt_for_user_token(username,scope,client_id=os.environ['SPOTIPY_CLIENT_ID'],client_secret=os.environ['SPOTIPY_CLIENT_SECRET'],redirect_uri=os.environ['SPOTIPY_REDIRECT_URI'])
+	sp = spotipy.Spotify(auth=token)
 	return render_template('summarization_page.html')
 
-@app.route('/homePage', methods = ['GET', 'POST'])
+@app.route('/', methods = ['GET', 'POST'])
 def homePage():
+	scope = 'playlist-read-private playlist-read-collaborative user-library-read user-read-recently-played user-top-read'
+	username = 'jchen13542'
+	global token
+	global sp
+	token = util.prompt_for_user_token(username,scope,client_id=os.environ['SPOTIPY_CLIENT_ID'],client_secret=os.environ['SPOTIPY_CLIENT_SECRET'],redirect_uri=os.environ['SPOTIPY_REDIRECT_URI'])
+	sp = spotipy.Spotify(auth=token)
 	return render_template('index.html')
-
 
 if __name__ == "__main__":
     app.run(debug=True)

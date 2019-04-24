@@ -18,7 +18,7 @@
   <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic' rel='stylesheet' type='text/css'>
 
   <!-- Plugin CSS -->
-  <link href="../staticvendor/magnific-popup/magnific-popup.css" rel="stylesheet">
+  <link href="../static/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
 
   <!-- Theme CSS - Includes Bootstrap -->
   <link href="../static/css/creative.css" rel="stylesheet">
@@ -46,11 +46,6 @@
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="https://cornelldata.science/">Cornell Data Science</a>
           </li>
-          <!--
-          <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#contact">Contact</a>
-          </li>
-        -->
         </ul>
       </div>
     </div>
@@ -66,7 +61,7 @@
         </div>
         <div class="col-lg-8 align-self-baseline">
           <p class="text-white-75 font-weight-light mb-5">Spotify currently does not provide any insight into your song recommendations. INSPIRE provides INsightful SPotIfy REcommendations.<br>Created by: James Chen, Max Chen, Shalin Mehta, Brandon Truong, Sam Fuchs</p>
-          <a class="btn btn-primary btn-xl js-scroll-trigger" href="#home">Search for Recommendations!</a>
+          <a class="btn btn-primary btn-xl js-scroll-trigger" href="{{ url_for('search_page') }}">Search for Recommendations!</a>
         </div>
       </div>
     </div>

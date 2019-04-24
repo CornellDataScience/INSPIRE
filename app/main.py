@@ -45,6 +45,23 @@ def get_relevant_points(song_id, df):
 	#return df
 	return relevant_rows
 
+def get_relevant_song_attr(song_id, df):
+	df1 = df[['song_id','cluster','song_1','song_2','song_3','song_4','song_5','song_6','song_7','song_8','song_9','song_10', \
+		"energy", "loudness", "danceability", "valence", "tempo","acousticness", "liveness", "duration_ms", "speechiness"]]
+
+	row = df1.loc[df1['song_id'] == song_id]
+	print(row)
+	print(row['song_id'].values[0])
+
+	relevant_points = [row['song_id'].values[0], row['song_1'].values[0], row['song_2'].values[0], row['song_3'].values[0], row['song_4'].values[0], row['song_5'].values[0], row['song_6'].values[0], \
+		row['song_7'].values[0], row['song_8'].values[0], row['song_9'].values[0], row['song_10'].values[0]]
+
+	print(row)
+	mask = df1['song_id'].isin(relevant_points)
+
+	df1 = df1.loc[mask]
+
+	return df1
 
 @app.route('/songSearchHandler', methods=['GET', 'POST'])
 def songSearchHandler():
@@ -55,12 +72,19 @@ def songSearchHandler():
 	SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
 	csv_url = os.path.join(SITE_ROOT, "static/", "songs_with_recommendations_and_2d_proj_60k.csv")
 	df = get_relevant_points(song_id, pd.read_csv(csv_url))
+
+	df_radar = get_relevant_song_attr(song_id, pd.read_csv(csv_url))
+
+	radar_data = df_radar.to_dict(orient='records')
+	radar_data = json.dumps(radar_data, indent=2)
+
 	clustering_data = df.to_dict(orient='records')
 	clustering_data = json.dumps(clustering_data, indent=2)
+
 	data = {'clustering_data': clustering_data}
 	print("SONG SONG SONG")
 
-	return json.dumps({'status':'OK','id': song_id,'relevant_points': clustering_data})
+	return json.dumps({'status':'OK','id': song_id,'relevant_points': clustering_data, 'radar_points' : radar_data})
 
 def getPairwiseComparisonData(song_id_1, song_id_2, df):
 	rows = df.loc[df['song_id'].isin([song_id_1, song_id_2])]

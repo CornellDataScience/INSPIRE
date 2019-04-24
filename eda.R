@@ -6,7 +6,7 @@ hist(spore$tempo)
 par(mfrow = c(2,1))
 
 ggplot(spore) + 
-  geom_histogram(aes(x = loudness), binwidth = .5, colour = "#fdbb84", fill = "#fdbb84") + 
+  geom_histogram(aes(x = loudness), binwidth = 1, colour = "#fdbb84", fill = "#fdbb84") + 
   theme_classic() + 
   xlab("Loudness") + 
   ylab("Frequency") +
@@ -15,7 +15,7 @@ ggplot(spore) +
   coord_flip()
 
 ggplot(spore) + 
-  geom_histogram(aes(x = tempo), binwidth = .5, colour = "#99d8c9", fill = "#99d8c9") + 
+  geom_histogram(aes(x = tempo), binwidth = 2, colour = "#99d8c9", fill = "#99d8c9") + 
   theme_classic()  + 
   xlab("Tempo") + 
   ylab("Frequency") +

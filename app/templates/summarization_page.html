@@ -1,0 +1,129 @@
+{% extends "main-typeahead.html" %}
+{% block content %}
+
+<head>
+    <link href="./static/css/custom.css" rel="stylesheet">
+</head>
+
+<style>
+    body {
+        height: 100%;
+        margin: 0;
+        font: 11px sans-serif;
+        background-image: linear-gradient(120deg, #1DB954, #191414);
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+
+    #playlist_track_view {
+        height: 600px;
+        background-color: blue;
+        width: 400px;
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    .player-scrollbar-inner {
+        width: 100%;
+        height: 99%;
+        overflow-y: scroll;
+    }
+
+
+    ::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<body>
+    <div id="playlist_retriever">
+        <button type="button" onclick="playlistRetriever()">Playlist Retriever </button>
+        <div id="playlist_track_view">
+
+        </div>
+    </div>
+</body>
+
+<script>
+
+    // Called whenever you click on a playlist name
+    function playlistOnClick(playlist_id) {
+        playlistTrackRetriever(playlist_id);
+    }
+
+    function generateTrackViewForPlaylist(track_ids) {
+        var playlist_retriever_container = document.getElementById("playlist_track_view");
+        console.log("generate track view for playlist", track_ids);
+        song_previews = []
+        var player_container = document.createElement("div");
+        player_container.className = "player-scrollbar-inner";
+        for (i = 0; i < track_ids.length; i++) {
+            let track_id = track_ids[i];
+            var iframe = document.createElement('iframe');
+            iframe.src = "https://open.spotify.com/embed/track/" + track_id;
+            iframe.width = "400";
+            iframe.height = "80";
+            iframe.frameBorder = "0";
+            iframe.allowtransparency = "true";
+            iframe.allow = "encrypted-media";
+            player_container.appendChild(iframe);
+        }
+        playlist_retriever_container.append(player_container);
+    }
+
+    function createPlaylistSelector(playlist_data) {
+        let playlist_selector_container = document.getElementById("playlist_retriever");
+        for (i = 0; i < playlist_data.length; i++) {
+
+            let playlist = playlist_data[i];
+            let playlist_text = document.createElement("div");
+            playlist_text.onclick = function () { playlistOnClick(playlist.playlist_id); };
+            playlist_text.innerHTML = playlist.playlist_name;
+            playlist_selector_container.appendChild(playlist_text);
+        }
+    }
+
+    function playlistRetriever() {
+        $.ajax({
+            url: '/playlistRetriever',
+            contentType: "application/json",
+            type: 'POST',
+            success: function (response) {
+                response = JSON.parse(response);
+                console.log(response);
+                createPlaylistSelector(response);
+
+            },
+            error: function (error) {
+                console.log("ERROR IN PLAYLIST RETRIEVER")
+            }
+        });
+    }
+
+    function playlistTrackRetriever(playlist_id) {
+        $.ajax({
+            url: '/playlistTrackRetriever',
+            data: JSON.stringify({ 'playlist_id': playlist_id }),
+            contentType: "application/json",
+            type: 'POST',
+            success: function (response) {
+                response = JSON.parse(response);
+                console.log(response);
+
+                generateTrackViewForPlaylist(response.playlist_track_ids);
+                console.log("finished generating tracks");
+
+            },
+            error: function (error) {
+                console.log("ERROR IN PLAYLIST TRACK RETRIEVER");
+            }
+        });
+    }
+</script>
+
+{% endblock %}

@@ -17,6 +17,7 @@
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;
+        text-align: center;
     }
 
     #playlist_track_view {
@@ -36,6 +37,36 @@
 
     ::-webkit-scrollbar {
         display: none;
+    }
+
+    .playlist-paragraph {
+        margin: 10px auto 5px auto;
+    }
+
+    .playlist-name {
+        
+        background-color: blue;
+        color: white;
+        font-weight: 800;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .playlist-image {
+        margin: 0px auto 10px auto;
+        cursor: pointer;
+    }
+
+    .playlist-container {
+        text-align: center;
+        margin: 0 auto;
+    }
+
+    #playlist_retriever {
+        width: 200px;
+        text-align: center;
+        background-color: yellow;
+        margin: 0 auto;
     }
 </style>
 
@@ -84,8 +115,29 @@
 
     function createPlaylistComponent(playlist) {
         let playlist_component = document.createElement("div");
-        playlist_component.className = "playlist_component";
-        playlist_component.onclick = function () { playlistOnClick(playlist.playlist_id); };
+        playlist_component.className = "playlist-container";
+
+        let playlist_image = document.createElement("img");
+        playlist_image.className = "playlist-image"
+        playlist_image.src = playlist.playlist_url;
+        playlist_image.width = 100;
+        playlist_image.height = 100;
+
+        let playlist_name_para = document.createElement("p");
+        playlist_name_para.className = "playlist-paragraph";
+        let playlist_name_text = document.createElement("a");
+
+        playlist_name_text.className = "playlist-name";
+        playlist_name_text.innerHTML = playlist.playlist_name;
+        playlist_name_para.appendChild(playlist_name_text);
+
+
+        playlist_image.onclick = function () { playlistOnClick(playlist.playlist_id); };
+        playlist_name_text.onclick = function () { playlistOnClick(playlist.playlist_id); };
+
+
+        playlist_component.appendChild(playlist_name_para);
+        playlist_component.appendChild(playlist_image);
         return playlist_component;
     }
 

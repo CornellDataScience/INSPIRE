@@ -2,8 +2,8 @@
 {% block content %}
 
 <head>
-  <link href="./static/css/custom.css" rel="stylesheet">
-  <link href="../static/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+  <link href="http://intellegostudio.com/inspire_static/css/custom.css" rel="stylesheet">
+  <link href="http://intellegostudio.com/inspire_static/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700" rel="stylesheet">
@@ -11,10 +11,10 @@
     rel='stylesheet' type='text/css'>
 
   <!-- Plugin CSS -->
-  <link href="../static/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
+  <link href="http://intellegostudio.com/inspire_static/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
 
   <!-- Theme CSS - Includes Bootstrap -->
-  <link href="../static/css/creative.css" rel="stylesheet">
+  <link href="http://intellegostudio.com/inspire_static/css/creative.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Oxygen" rel="stylesheet">
 </head>
 
@@ -120,7 +120,7 @@
               <li class="nav-item">
                 <a class="nav-link js-scroll-trigger" href="{{ url_for('search_page') }}">Features</a>
               </li>
-    
+
               <li class="nav-item">
                 <a class="nav-link js-scroll-trigger" href="https://cornelldata.science/">Cornell Data Science</a>
               </li>
@@ -160,14 +160,14 @@
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
-  /* 
+  /*
    * value accessor - returns the value to encode for a given data object.
    * scale - maps value to a visual display encoding, such as a pixel position.
    * map function - maps from data value to display value
    * axis - sets up axis
    */
 
-  // setup x 
+  // setup x
   var xValue = function (d) { return d.x; }, // data -> value
     xScale = d3.scaleLinear().range([0, width]), // value -> display
     xMap = function (d) { return xScale(xValue(d)); }, // data -> display
@@ -371,7 +371,7 @@ var yAxis = d3.axisLeft(y).tickSize(0).tickPadding(6);
     var meanSpeechiness = d3.mean(matching_song_data, function (d) { return d.speechiness; });
 
 
-    // Append song players 
+    // Append song players
     song_previews = []
     var player_container = document.createElement("div");
     player_container.className = "player-scrollbar";
@@ -440,10 +440,10 @@ var yAxis = d3.axisLeft(y).tickSize(0).tickPadding(6);
     console.log("RADAR_POINTS", radar_points);
 
     // let feature_names = Object.keys(song_data[0]);
-    // Ordered by mean value 
+    // Ordered by mean value
     let feature_names = ["energy", "loudness", "danceability", "valence", "tempo", "acousticness", "liveness", "duration_ms", "speechiness"];
 
-    // Reordered so radar chart displays energy on top 
+    // Reordered so radar chart displays energy on top
     // let visual_ordered_names = ["valence", "tempo","acousticness", "liveness", "duration_ms", "speechiness", "energy", "loudness", "danceability"];
     let visual_ordered_names = ["acousticness", "liveness", "duration_ms", "speechiness", "energy", "loudness", "danceability", "valence", "tempo"];
     console.log(feature_names);

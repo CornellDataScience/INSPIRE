@@ -1,373 +1,760 @@
 {% extends "main-typeahead.html" %}
 {% block content %}
+
 <head>
-    <link href="./static/css/custom.css" rel="stylesheet">
+  <link href="./static/css/custom.css" rel="stylesheet">
+  <link href="../static/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700" rel="stylesheet">
+  <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic'
+    rel='stylesheet' type='text/css'>
+
+  <!-- Plugin CSS -->
+  <link href="../static/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
+
+  <!-- Theme CSS - Includes Bootstrap -->
+  <link href="../static/css/creative.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Oxygen" rel="stylesheet">
 </head>
 
 
 <style>
-    body {
-      height: 100%;
-      margin: 0;
-      font: 11px sans-serif;
-      background-image: linear-gradient(120deg, #D3D3D3, #191414); 
-        -webkit-background-size: cover;
-        -moz-background-size: cover;
-        -o-background-size: cover;
-        background-size: cover;
-        background-repeat: no-repeat;
+  body {
+    height: 100%;
+    margin: 0;
+    font: 12px sans-serif;
+    font-weight:500;
+    /* background-image: linear-gradient(120deg, #1DB954, #191414); */
+    background-color: #58D68D;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    background-repeat: no-repeat;
     background-attachment: fixed;
-    }
-
-    #style-1::-webkit-scrollbar-track
-  {
-    box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-    border-radius: 10px;
   }
 
-  #style-1::-webkit-scrollbar
-  {
-    width: 12px;
-  }
-
-  #style-1::-webkit-scrollbar-thumb
-  {
-    border-radius: 10px;
-    box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-    background-color: #555;
-  }
-
-  .player-scrollbar
-  {
-    height: 400px;
-    width: 412px;
+  .player-scrollbar {
     overflow-y: scroll;
+    width: 100%;
+    height: 99%;
+    overflow-y: scroll;
+    border-color: white;
+    border-width: 30px;
+    border-style: solid;
+    background-color: white;
+
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dot {
+    stroke: #000;
+  }
+
+  .tooltip {
+    position: absolute;
+    width: 200px;
+    height: 28px;
+    pointer-events: none;
+  }
+
+  #clustering,
+  #song_summary,
+  #song_recommendations,
+  #song_statistics,
+  #radar_plot {
     margin: auto;
     text-align: center;
   }
 
+  #song_recommendations {
+    height: 400px;
+    width: 460px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
 
+  .based-on {
+    font-size: 24pt;
+    color: white;
+  }
 
-    .axis path,
-    .axis line {
-      fill: none;
-      stroke: #000;
-      shape-rendering: crispEdges;
-    }
-    
-    .dot {
-      stroke: #000;
-    }
-    
-    .tooltip {
-      position: absolute;
-      width: 200px;
-      height: 28px;
-      pointer-events: none;
-    }
+  .bar--positive {
+    fill: #6666ff;
+  }
 
-    #clustering, #song_summary {
-      margin: auto;
-      text-align: center;
-    }
+  .bar--negative {
+    fill:  #ff6600;
+  }
 
-    .based-on {
-      font-size: 24pt;
-      color: white;
-    }
-    </style>
+  .axis text {
+    font: 10px sans-serif;
+  }
 
-<script src="https://d3js.org/d3.v3.min.js"></script>
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+</style>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
 
 <body>
-    <div id = "search-bar-container">
-        <input type="text" data-role="tagsinput" placeholder="Search for a song"/>
-        <div onclick="search()" class = "search-icon">
-            <i class="fas fa-search fa-2x"></i>
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top py-3" id="mainNav">
+        <div class="container">
+          <a class="navbar-brand js-scroll-trigger" href="#page-top">INSPIRE</a>
+          <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto my-2 my-lg-0">
+              <li class="nav-item">
+                <a class="nav-link js-scroll-trigger" href="{{ url_for('homePage') }}">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link js-scroll-trigger" href="{{ url_for('search_page') }}">Features</a>
+              </li>
+    
+              <li class="nav-item">
+                <a class="nav-link js-scroll-trigger" href="https://cornelldata.science/">Cornell Data Science</a>
+              </li>
+            </ul>
+          </div>
         </div>
-    </div>
+      </nav>
 
-    <div id = "clustering">
+  <div id="search-bar-container">
+    <input type="text" data-role="tagsinput" placeholder="Search for a song" />
+    <div onclick="search()" class="search-icon">
+      <i class="fas fa-search fa-2x"></i>
     </div>
+  </div>
+  <br><br>
 
-    <div id = "song_summary">
-      </div>
+  <div id="clustering"></div>
+  <br>
+  <br>
+  <div id="radar_plot"></div>
+  <br><br>
+
+  <div id="song_summary"></div>
+
+  <div id = "song_recommendations"></div>
+  <br><br>
+  <div id="song_statistics"></div>
+</body>
+
+
+</div>
 
 </body>
 
 <script>
-    var margin = {top: 20, right: 20, bottom: 30, left: 40},
-        width = 960 - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom;
-    
-    /* 
-     * value accessor - returns the value to encode for a given data object.
-     * scale - maps value to a visual display encoding, such as a pixel position.
-     * map function - maps from data value to display value
-     * axis - sets up axis
-     */ 
-    
-    // setup x 
-    var xValue = function(d) { return d.x;}, // data -> value
-        xScale = d3.scale.linear().range([0, width]), // value -> display
-        xMap = function(d) { return xScale(xValue(d));}, // data -> display
-        xAxis = d3.svg.axis().scale(xScale).orient("bottom");
-    
-    // setup y
-    var yValue = function(d) { return d.y;}, // data -> value
-        yScale = d3.scale.linear().range([height, 0]), // value -> display
-        yMap = function(d) { return yScale(yValue(d));}, // data -> display
-        yAxis = d3.svg.axis().scale(yScale).orient("left");
-    
-    // setup fill color
-    var cValue = function(d) { return d.cluster;},
-        color = d3.scale.category10();
-    
-    // add the graph canvas to the body of the webpage
-    var svg = d3.select("#clustering").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    
-    // add the tooltip area to the webpage
-    var tooltip = d3.select("body").append("div")
-        .attr("class", "tooltip")
-        .style("opacity", 0);
-    </script>
+  var margin = { top: 20, right: 20, bottom: 30, left: 40 },
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+  /* 
+   * value accessor - returns the value to encode for a given data object.
+   * scale - maps value to a visual display encoding, such as a pixel position.
+   * map function - maps from data value to display value
+   * axis - sets up axis
+   */
+
+  // setup x 
+  var xValue = function (d) { return d.x; }, // data -> value
+    xScale = d3.scaleLinear().range([0, width]), // value -> display
+    xMap = function (d) { return xScale(xValue(d)); }, // data -> display
+    // xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+    xAxis = d3.axisBottom(xScale);
+
+  // setup y
+  var yValue = function (d) { return d.y; }, // data -> value
+    yScale = d3.scaleLinear().range([height, 0]), // value -> display
+    yMap = function (d) { return yScale(yValue(d)); }, // data -> display
+    // yAxis = d3.svg.axis().scale(yScale).orient("left");
+    yAxis = d3.axisLeft(yScale);
+
+  // setup fill color
+  var cValue = function (d) { return d.cluster; },
+    // color = d3.scale.category10();
+    color = d3.scaleOrdinal(d3.schemeCategory10);
+
+  // add the graph canvas to the body of the webpage
+  var svg = d3.select("#clustering").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  // add the tooltip area to the webpage
+  var tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+// Bar Chart Set-up
+var bar_chart_margin = { top: 100, right: 30, bottom: 40, left: 30 },
+bar_width = 960 - bar_chart_margin.left - bar_chart_margin.right,
+bar_height = 500 - bar_chart_margin.top - bar_chart_margin.bottom;
+
+
+var x = d3.scaleLinear()
+      .domain([0, 100])
+      .range([0, bar_width])
+
+var y = d3.scaleBand()
+  .rangeRound([0, bar_height])
+  .padding(0.1)
+
+var xAxis = d3.axisBottom(x);
+var yAxis = d3.axisLeft(y).tickSize(0).tickPadding(6);
+</script>
 
 
 <script>
-var songs = new Bloodhound({
-  datumTokenizer: Bloodhound.tokenizers.obj.whitespace('song_name', 'artist'),
-  queryTokenizer: Bloodhound.tokenizers.whitespace,
-  prefetch: {
-    url: 'static/song_id_and_names_0_63233.json',
-    filter: function(list) {
-    return list.songs;
+  var songs = new Bloodhound({
+    datumTokenizer: Bloodhound.tokenizers.obj.whitespace('song_name', 'artist'),
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    prefetch: {
+      url: 'static/song_id_and_names_0_63233.json',
+      filter: function (list) {
+        return list.songs;
+      }
     }
-  }
-});
+  });
 
-songs.clearPrefetchCache();
-songs.initialize();
+  songs.clearPrefetchCache();
+  songs.initialize();
 
-var elt = $('input');
-elt.tagsinput({
-  itemValue: 'song_id',
-  itemText: function(song){
-    return song.song_name + ' - ' + song.artist;
-    },
-  typeaheadjs: {
-    name: 'songs',
-    limit: 10,
-    displayKey: function(song){
+  var elt = $('input');
+  elt.tagsinput({
+    maxTags: 1,
+    itemValue: 'song_id',
+    itemText: function (song) {
       return song.song_name + ' - ' + song.artist;
     },
-    source: songs.ttAdapter()
+    typeaheadjs: {
+      name: 'songs',
+      limit: 10,
+      displayKey: function (song) {
+        return song.song_name + ' - ' + song.artist;
+      },
+      source: songs.ttAdapter()
+    }
+  });
+
+
+  function loadClustering(song_id, relevant_points) {
+    // load data
+    var data = relevant_points;
+    data = data.filter(function (song) {
+      return song['top_10'] == true;
+    });
+
+    console.log(relevant_points);
+
+    // change string (from CSV) into number format
+    data.forEach(function (d) {
+      d.X = +d.X;
+      d.Y = +d.Y;
+    });
+
+    // don't want dots overlapping axis, so add in buffer to data domain
+    xScale.domain([d3.min(data, xValue) - 0.01, d3.max(data, xValue) + 0.01]);
+    yScale.domain([d3.min(data, yValue) - 0.01, d3.max(data, yValue) + 0.01]);
+
+
+    // draw dots
+    svg.selectAll(".dot")
+      .data(data)
+      .enter().append("circle")
+      .attr("class", "dot")
+      .attr("r", function (d) {
+        if (d['top_10'] == true) {
+          return 8.0;
+        }
+        else {
+          return 4.0;
+        }
+      })
+      .attr("cx", xMap)
+      .attr("cy", yMap)
+      .style("fill", function (d) {
+        return "#1f77b4";
+      })
+      .style("opacity", function (d) {
+        if (d['top_10'] == true) {
+          return '0.9';
+        }
+        else {
+          return '0.6';
+        }
+      })
+      .style("stroke-width", function (d) {
+        if (d['song_id'] == song_id) {
+          return 5;
+        }
+      })
+      .on("mouseover", function (d) {
+        d3.select(this).style("r", function (dot) {
+          if (d['top_10']) {
+            return 10.0;
+          }
+        });
+
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", .9);
+        tooltip.html(d.song_name + " - " + d.artist + "<br/>")
+          .style("left", (d3.event.pageX + 5) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+      })
+      .on("mouseout", function (d) {
+        d3.select(this).style("r", function (dot) {
+          if (d['top_10']) {
+            return 8.0;
+          }
+        });
+        tooltip.transition()
+          .duration(500)
+          .style("opacity", 0);
+      });
   }
-});
 
-function loadClustering(song_id, relevant_points) {
-// load data
-      var data = relevant_points;
-      data = data.filter(function(song) {
-        return song['top_10'] == true;
-      });
-
-      // change string (from CSV) into number format
-      data.forEach(function(d) {
-        d.X = +d.X;
-        d.Y = +d.Y;
-      });
-    
-      // don't want dots overlapping axis, so add in buffer to data domain
-      xScale.domain([d3.min(data, xValue)-0.01, d3.max(data, xValue)+0.01]);
-      yScale.domain([d3.min(data, yValue)-0.01, d3.max(data, yValue)+0.01]);
-    
-    
-      // draw dots
-      svg.selectAll(".dot")
-          .data(data)
-        .enter().append("circle")
-          .attr("class", "dot")
-          .attr("r", function(d) {
-              if(d['top_10'] == true) {
-                return 8.0;
-              }
-              else {
-                return 4.0;
-              }
-          })
-          .attr("cx", xMap)
-          .attr("cy", yMap)
-          .style("fill", function(d) { 
-              return color(cValue(d));
-          })
-          .style("opacity", function(d) { 
-            if(d['top_10'] == true) {
-                return '0.9';
-              }
-              else {
-                return '0.6';
-              }
-          })
-          .style("stroke-width", function(d) {
-            if(d['song_id'] == song_id) {
-              return 5;
-            }
-          })
-          .on("mouseover", function(d) {
-            d3.selectAll('circle').style("r", function(dot){
-              if(d['top_10'] && dot['top_10']){
-                return 10.0;
-              } 
-              else if (d['top_10'] && (d['cluster'] == dot['cluster'])){
-                return 5.0
-              }
-              else if(d['top_10'] == false && dot['top_10'] == false && (d['cluster'] == dot['cluster'])) {
-                return 5.0;
-              }
-            });
-              
-              tooltip.transition()
-                   .duration(200)
-                   .style("opacity", .9);
-              tooltip.html(d.song_name + " - " + d.artist + "<br/>")
-                   .style("left", (d3.event.pageX + 5) + "px")
-                   .style("top", (d3.event.pageY - 28) + "px");
-          })
-          .on("mouseout", function(d) {
-            d3.selectAll('circle').style("r", function(dot){
-              if(d['top_10'] && dot['top_10']){
-                return 8.0;
-              } 
-              else if (d['top_10'] && (d['cluster'] == dot['cluster'])){
-                return 4.0;
-              }
-              else if(d['top_10'] == false && dot['top_10'] == false && (d['cluster'] == dot['cluster'])) {
-                return 4.0;
-              }
-            });
-              tooltip.transition()
-                   .duration(500)
-                   .style("opacity", 0);
-          });
-    
-      
-    
-}
-function createSongSummary(song_id, points) {
-  var song_summary_container = document.getElementById ("song_summary");
-  console.log(song_summary_container);
+  function createSongSummary(song_id, points) {
+    var song_summary_container = document.getElementById("song_summary");
+    console.log(song_summary_container);
 
 
-  var basedOnElem = document.createElement("h1");
-  basedOnElem.className = "based-on";
-  var matching_songs = points.filter(function(song) {
-    return song.song_id == song_id;
-  });
-  song_name = matching_songs[0].song_name;
-  song_artist = matching_songs[0].artist;
-  var str = "Based on the song " + song_name + " by " + song_artist + " you are suggested: " 
-  var text = document.createTextNode(str);
-  basedOnElem.appendChild(text);
+    var basedOnElem = document.createElement("h1");
+    basedOnElem.className = "based-on";
+    var matching_songs = points.filter(function (song) {
+      return song.song_id == song_id;
+    });
+    song_name = matching_songs[0].song_name;
+    song_artist = matching_songs[0].artist;
+    var str = "<span style = 'color: white'> Based on the song </span>" + "<span style = 'color: black'>" + song_name +  "</span>" + "<span style = 'color: black'> by </span>" + "<span style = 'color: black'>" + song_artist +  "</span>" + "<span style = 'color:white'> you are suggested: </span>"
+    basedOnElem.innerHTML = str;
 
-  song_summary_container.appendChild(basedOnElem);
-
-
-  var matching_song_ids = [matching_songs[0].song_1, matching_songs[0].song_2, matching_songs[0].song_3, matching_songs[0].song_4, matching_songs[0].song_5, matching_songs[0].song_6, matching_songs[0].song_7, matching_songs[0].song_8, matching_songs[0].song_9, matching_songs[0].song_10];
-  var matching_song_data = points.filter(function(song) {
-    return matching_song_ids.includes(song.song_id);
-  });
-  var matching_song_names = []
-  var matching_song_artists = []
-  // var matching_song_acousticness = []
-  // var matching_song_danceability = []
-  // var matching_song_energy = []
-  // var matching_song_instrumentalness = []
-  // var matching_song_loudness = []
-  // var matching_song_tempo = []
-  // var matching_song_speechiness = []
+    song_summary_container.appendChild(basedOnElem);
+    song_summary_container.appendChild(document.createElement("br"))
 
 
-  for(i = 0; i < points.length; i++) {
-    song = points[i];
-    if(matching_song_ids.indexOf(song.song_id) > -1) {
-      matching_song_names.push(song.song_name);
-      matching_song_artists.push(song.artist);
-      // matching_song_acousticness.push(song.acousticness);
-      // matching_song_danceability.push(song.danceability);
-      // matching_song_energy.push(song.energy);
-      // matching_song_instrumentalness.push(song.instrumentalness);
-      // matching_song_loudness.push(song.loudness);
-      // matching_song_tempo.push(song.tempo);
-      // matching_song_speechiness.push(song.speechiness);
+    var matching_song_ids = [matching_songs[0].song_1, matching_songs[0].song_2, matching_songs[0].song_3, matching_songs[0].song_4, matching_songs[0].song_5, matching_songs[0].song_6, matching_songs[0].song_7, matching_songs[0].song_8, matching_songs[0].song_9, matching_songs[0].song_10];
+    var matching_song_data = points.filter(function (song) {
+      return matching_song_ids.includes(song.song_id);
+    });
+    var matching_song_names = []
+    var matching_song_artists = []
+
+
+    for (i = 0; i < points.length; i++) {
+      song = points[i];
+      if (matching_song_ids.indexOf(song.song_id) > -1) {
+        matching_song_names.push(song.song_name);
+        matching_song_artists.push(song.artist);
+      }
+    }
+    var meanAcousticness = d3.mean(matching_song_data, function (d) { return d.acousticness; });
+    console.log(meanAcousticness);
+    var meanDanceability = d3.mean(matching_song_data, function (d) { return d.danceability; });
+    var meanEnergy = d3.mean(matching_song_data, function (d) { return d.energy; });
+    var meanInstrumentalness = d3.mean(matching_song_data, function (d) { return d.instrumentalness; });
+    var meanLoudness = d3.mean(matching_song_data, function (d) { return d.loudness; });
+    var meanTempo = d3.mean(matching_song_data, function (d) { return d.tempo; });
+    var meanSpeechiness = d3.mean(matching_song_data, function (d) { return d.speechiness; });
+
+
+    // Append song players 
+    song_previews = []
+    var player_container = document.createElement("div");
+    player_container.className = "player-scrollbar";
+    for (i = 0; i < matching_song_ids.length; i++) {
+      var iframe = document.createElement('iframe');
+      iframe.src = "https://open.spotify.com/embed/track/" + matching_song_ids[i];
+      iframe.width = "400";
+      iframe.height = "80";
+      iframe.frameBorder = "0";
+      iframe.allowtransparency = "true";
+      iframe.allow = "encrypted-media";
+      player_container.appendChild(iframe);
+    }
+    song_rec_container = document.getElementById("song_recommendations");
+    song_rec_container.appendChild(player_container);
+  }
+
+
+  function createSongStatistics(song_name, artist, song_feature_percentiles) {
+    console.log("percentiless", song_feature_percentiles);
+    song_feature_percentiles = song_feature_percentiles.slice(-10);
+    song_feature_percentiles = song_feature_percentiles.map(function (d) {
+      d.value = (d.value - 0.5) * 2;
+      return d;
+    })
+    //song_feature_percentiles = {acousticness: 80, instrumentalness: 25, energy: -20, danceability: -50};
+    console.log(song_feature_percentiles);
+    var svg = d3.select("body").select("#song_statistics").append("svg")
+      .attr("width", bar_width + bar_chart_margin.left + bar_chart_margin.right)
+      .attr("height", bar_height + bar_chart_margin.top + bar_chart_margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + bar_chart_margin.left + "," + bar_chart_margin.top + ")");
+
+    x.domain([d3.min(song_feature_percentiles, function (d) { return d.value; }), d3.max(song_feature_percentiles, function (d) { return d.value; })]);
+    y.domain(song_feature_percentiles.map(function (d) { return d.feature; }));
+
+
+    svg.selectAll(".bar")
+      .data(song_feature_percentiles)
+      .enter().append("rect")
+      .attr("class", function (d) { return "bar bar--" + (d.value < 0 ? "negative" : "positive"); })
+      .attr("x", function (d) { console.log("x"); console.log(d.value); console.log(typeof (d.value)); return x(Math.min(0, d.value)); })
+      .attr("y", function (d) { return y(d.feature); })
+      .attr("width", function (d) { console.log("width"); console.log(d.value); return Math.abs(x(d.value) - x(0)); })
+      .attr("height", 25);
+
+    svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + bar_height + ")")
+      .call(xAxis);
+
+    svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + x(0) + ",0)")
+      .call(yAxis);
+
+    function type(d) {
+      d.value = +d.value;
+      return d;
     }
   }
-  var meanAcousticness = d3.mean(matching_song_data, function(d) { return d.acousticness;});
-  console.log(meanAcousticness);
-  var meanDanceability = d3.mean(matching_song_data, function(d) { return d.danceability;});
-  var meanEnergy = d3.mean(matching_song_data, function(d) { return d.energy;});
-  var meanInstrumentalness = d3.mean(matching_song_data, function(d) { return d.instrumentalness;});
-  var meanLoudness = d3.mean(matching_song_data, function(d) { return d.loudness;});
-  var meanTempo = d3.mean(matching_song_data, function(d) { return d.tempo;});
-  var meanSpeechiness = d3.mean(matching_song_data, function(d) { return d.speechiness;});
 
-  
-  // Append song players 
-  song_previews = []
-  var player_container = document.createElement("div");
-  player_container.className = "player-scrollbar";
-  player_container.id= "style-1";
-  for(i = 0; i < matching_song_ids.length; i++) {
-    var iframe = document.createElement('iframe');
-    iframe.src = "https://open.spotify.com/embed/track/" + matching_song_ids[i];
-    iframe.width = "400";
-    iframe.height = "80";
-    iframe.frameBorder = "0";
-    iframe.allowtransparency = "true";
-    iframe.allow = "encrypted-media";
-    player_container.appendChild(iframe);
+
+  function build_radar_chart(song_id, radar_points) {
+    console.log(song_id);
+    console.log("RADAR_POINTS", radar_points);
+
+    // let feature_names = Object.keys(song_data[0]);
+    // Ordered by mean value 
+    let feature_names = ["energy", "loudness", "danceability", "valence", "tempo", "acousticness", "liveness", "duration_ms", "speechiness"];
+
+    // Reordered so radar chart displays energy on top 
+    // let visual_ordered_names = ["valence", "tempo","acousticness", "liveness", "duration_ms", "speechiness", "energy", "loudness", "danceability"];
+    let visual_ordered_names = ["acousticness", "liveness", "duration_ms", "speechiness", "energy", "loudness", "danceability", "valence", "tempo"];
+    console.log(feature_names);
+
+    // create margins
+    let margin = { left: 20, right: 20, top: 20, bottom: 20 };
+
+    let radar_svg = d3.select("#radar_plot").append("svg")
+      .attr("id", "radarchart")
+      .attr("width", 640)
+      .attr("height", 640);
+
+    // let radar_svg = d3.select("#radarchart");
+    let width = radar_svg.attr("width");
+    let height = radar_svg.attr("height");
+
+    let radar_width = width - margin.left - margin.right;
+    let radar_height = height - margin.top - margin.bottom;
+
+    let radar_plot = radar_svg.append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    function create_circle(radius) {
+      radar_plot.append("circle")
+        .attr("r", radius)
+        .attr("cx", radar_width / 2)
+        .attr("cy", radar_height / 2)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("opacity", 0.15)
+        .style("fill", "lightgrey");
+    }
+
+    const angle_value = 40; // 9 features gives 360 degrees
+    const angle_offset = 10; // keep the top feature vertically-aligned
+
+    // add radar plot circles
+    for (let i = 5; i >= 1; i--) {
+      radius = i * 50;
+      create_circle(radius);
+    }
+
+    // create axes
+    let total = visual_ordered_names.length; // number of features
+
+    let radius_scale = d3.scaleLinear()
+      .domain([0, 1])
+      .range([0, 250])
+
+    let center_x = radar_width / 2;
+    let center_y = radar_height / 2;
+
+    // create axis labels
+    let ticks = [0.2, 0.4, 0.6, 0.8, 1.0];
+
+    ticks.forEach(t =>
+      radar_plot.append("text")
+        .attr("x", 280)
+        .attr("y", 300 - radius_scale(t))
+        .text(t)
+        .style("font-family", "Oxygen")
+        .style("font-size", 12)
+    );
+
+    function create_axis_lines(radius, theta) {
+      radar_plot.append("line")
+        .attr("x1", center_x)
+        .attr("y1", center_y)
+        .attr("x2", center_x + radius * Math.cos(theta * Math.PI / 180))
+        .attr("y2", center_y + radius * Math.sin(theta * Math.PI / 180))
+        .attr("stroke", "black")
+        .attr("opacity", 0.3);
+    }
+
+    let axis_angle = angle_value;
+
+    // creating radial axis lines
+    for (let i = 1; i <= total; i++) {
+      create_axis_lines(265, axis_angle - angle_offset);
+      axis_angle += angle_value;
+    }
+
+    // mapping feature names to angles
+    let feature_angle_dict = {};
+    let feat_angle = angle_value;
+
+    for (let i = 0; i < visual_ordered_names.length; i++) {
+      let feat = visual_ordered_names[i];
+
+      feature_angle_dict[feat] = feat_angle - 10;
+      feat_angle += angle_value;
+    }
+
+    console.log(feature_angle_dict);
+
+    function create_axis_labels(feat_name, theta, radius) {
+      let text_x = center_x + radius * Math.cos(theta * Math.PI / 180);
+      let text_y = center_y + radius * Math.sin(theta * Math.PI / 180);
+
+      radar_plot.append("text")
+        .attr("id", feat_name + "label")
+        .attr("x", text_x - 20)
+        .attr("y", text_y + 5)
+        .text(feat_name)
+        .style("font-family", "Oxygen")
+        .style("font-size", 12);
+    }
+
+    let label_angle = angle_value;
+
+    for (let i = 0; i < visual_ordered_names.length; i++) {
+      feat = visual_ordered_names[i];
+      create_axis_labels(feat, label_angle - angle_offset, 290);
+      label_angle += angle_value;
+    }
+
+    let song_id_point_dict = {};
+
+    function calc_point_coords(radius, theta, song_id) {
+      let cx = center_x + radius * Math.cos(theta * Math.PI / 180);
+      let cy = center_y + radius * Math.sin(theta * Math.PI / 180);
+
+      let coords = { "x": cx, "y": cy };
+
+      if (song_id in song_id_point_dict) {
+        song_id_point_dict[song_id].push(coords);
+      }
+      else {
+        song_id_point_dict[song_id] = [coords];
+      }
+    }
+
+    function plot_point(radius, theta, feat, value, color) {
+      var cx = center_x + radius * Math.cos(theta * Math.PI / 180);
+      var cy = center_y + radius * Math.sin(theta * Math.PI / 180);
+
+      console.log("cx", cx, "cy", cy)
+
+      console.log("Jimmy's radius", radius);
+
+      let text_x = cx - 15;
+      let text_y = cy - 15;
+      let r = 5;
+
+      console.log("text", text_x, text_y)
+      console.log("radarrrr points", radar_points);
+
+      radar_plot.append("circle")
+        .attr("class", "radar_dots")
+        .attr("r", r)
+        .attr("cx", function () { console.log("....", cx); return cx; })
+        .attr("cy", cy)
+        .attr("opacity", 0.6)
+        .style("fill", color)
+
+        .on("mouseover", function () {
+          d3.select(this)
+            .transition().duration(150)
+            .attr("r", 2 * r)
+            .attr("opacity", 1);
+
+          radar_plot.append("text")
+            .attr("id", feat)
+            .attr("x", text_x)
+            .attr("y", text_y)
+            .text(value.toFixed(3))
+            .style("font-family", "Oxygen")
+            .style("font-size", 12);
+
+          d3.select("#" + feat + "label")
+            .transition().duration(150)
+            .style("fill", color)
+        })
+
+        .on("mouseout", function () {
+          d3.select(this)
+            .transition().duration(150)
+            .attr("r", r)
+            .attr("opacity", 0.7);
+
+          d3.select("#" + feat).remove();
+
+          d3.select("#" + feat + "label")
+            .transition().duration(150)
+            .style("fill", "black")
+        });
+    }
+
+    let song_id_arr = [song_id];
+    let colors = ["#3377ff"];
+
+    let line = d3.line()
+      .x(d => d.x)
+      .y(d => d.y);
+
+    for (let s = 0; s < song_id_arr.length; s++) {
+      let id = song_id_arr[s];
+
+      for (let i = 0; i < visual_ordered_names.length; i++) {
+        let feat = visual_ordered_names[i];
+
+        for (let d = 0; d < radar_points.length; d++) {
+          let dict = radar_points[d];
+          var value;
+
+          if (dict["song_id"] === id) {
+            value = dict[feat];
+            break;
+          }
+        }
+
+        console.log(feat, value);
+
+        let theta = feature_angle_dict[feat];
+        let radius = radius_scale(value);
+        calc_point_coords(radius, theta, id);
+      }
+
+    }
+
+    let song_id_point_lst = [];
+
+    for (var key in song_id_point_dict) {
+      if (song_id_point_dict.hasOwnProperty(key)) {
+        song_id_point_lst.push([key, song_id_point_dict[key]]);
+      }
+    }
+
+    // add the first point to the end to complete shape
+    for (let i = 0; i < song_id_point_lst.length; i++) {
+      let fst_point = song_id_point_lst[i][1][0];
+      song_id_point_lst[i][1].push(fst_point);
+    }
+
+    // Drawing path through each set of points
+    for (let i = 0; i < song_id_point_lst.length; i++) {
+      let d = song_id_point_lst[i][1]; // array of point objects
+      let color = colors[i];
+
+      radar_plot.append("path")
+        .data(d)
+        .attr("class", "plot_block")
+        .attr("d", line(d))
+        .attr("stroke", color)
+        .attr("stroke-width", 2)
+        .attr("stroke-opacity", 1)
+        .attr("fill", color)
+        .attr("opacity", 0.5)
+    }
+
+
+    // iterate through the two songs and plot points on top of fill
+    // so that they can be hovered over
+    for (let s = 0; s < song_id_arr.length; s++) {
+      let id = song_id_arr[s];
+      let color = colors[s];
+
+      for (let i = 0; i < visual_ordered_names.length; i++) {
+        let feat = visual_ordered_names[i];
+
+        for (let d = 0; d < radar_points.length; d++) {
+          let dict = radar_points[d]
+
+          if (dict["song_id"] === id) {
+            value = dict[feat];
+            break;
+          }
+        }
+
+        let theta = feature_angle_dict[feat];
+        let radius = radius_scale(value);
+
+        console.log("radar points", radar_points)
+        plot_point(radius, theta, feat, value, color);
+      }
+
+    }
   }
 
-  song_summary_container.appendChild(player_container);
+  function search() {
+    var song_ids = document.getElementsByTagName("input")[2].value;
+    song_ids = String(song_ids)
+    d3.selectAll(".dot").remove();
+    d3.select("#song_summary").selectAll("*").remove();
+    d3.select("#radarchart").remove();
+    $.ajax({
+      url: '/songSearchHandler',
+      data: JSON.stringify({ 'song_ids': song_ids }),
+      contentType: "application/json",
+      type: 'POST',
+      success: function (response) {
+        // console.log(response);
+        value = JSON.parse(response)
+        foo = JSON.parse(value.relevant_points.replace(/\bNaN\b/g, "null"));
+        console.log("FOO", foo)
+        console.log("...");
+        foo_radar = JSON.parse(value.radar_points.replace(/\bNaN\b/g, "null"));
+        console.log("foo_radara", foo_radar)
+        loadClustering(value.id, foo);
+        createSongSummary(value.id, foo);
+        createSongStatistics(value.song_name, value.artist, JSON.parse(value.percentile_data));
+        build_radar_chart(value.id, foo_radar);
 
+      },
+      error: function (error) {
+        console.log("ERROR")
+        console.log(error);
+      }
+    });
+  }
 
-  // var str2 = "";
-  // for(i = 0; i < matching_song_names.length; i++) {
-  //   var para2 = document.createElement("p")
-  //   para2.className = "summary";
-  //   var str2 = matching_song_names[i] + " - " + matching_song_artists[i];
-  //   var text2 = document.createTextNode(str2);
-  //   para2.appendChild(text2);
-  //   container.appendChild(para2);
-  // }
-}
-
-function search(){
-  var song_ids = document.getElementsByTagName("input")[2].value;
-  song_ids = String(song_ids)
-  d3.selectAll(".dot").remove();
-  d3.select("#song_summary").selectAll("*").remove();
-  $.ajax({
-            url: '/songSearchHandler',
-            data: JSON.stringify({'song_ids':song_ids}),
-            contentType: "application/json",
-            type: 'POST',
-            success: function(response) {
-              value = JSON.parse(response)
-              foo = JSON.parse(value.relevant_points.replace(/\bNaN\b/g, "null"));
-              loadClustering(value.id, foo);
-              createSongSummary(value.id, foo);
-
-            },
-            error: function(error) {
-              console.log("ERROR")
-                console.log(error);
-            }
-        });
-}
 </script>
 
 {% endblock %}

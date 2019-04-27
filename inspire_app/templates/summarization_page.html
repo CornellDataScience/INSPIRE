@@ -1,0 +1,307 @@
+{% extends "main-typeahead.html" %}
+{% block content %}
+
+<head>
+    <link href="./static/css/custom.css" rel="stylesheet">
+    <link href="../static/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic'
+        rel='stylesheet' type='text/css'>
+
+    <!-- Plugin CSS -->
+    <link href="../static/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
+
+    <!-- Theme CSS - Includes Bootstrap -->
+    <link href="../static/css/creative.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Oxygen" rel="stylesheet">
+</head>
+
+<style>
+    body {
+        height: 100%;
+        margin: 0;
+        font: 11px sans-serif;
+        /* background-image: linear-gradient(120deg, #1DB954, #191414); */
+        background-color: #58D68D;
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        text-align: center;
+        font-family: "Merriweather Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue";
+    }
+
+    #playlist_track_view {
+        height: 400px;
+        width: 460px;
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    .player-scrollbar-inner {
+        width: 100%;
+        height: 99%;
+        overflow-y: scroll;
+        border-color: white;
+        border-width: 30px;
+        border-style: solid;
+        background-color: white;
+    }
+
+    .playlist_iframe {
+        margin: 5px auto 5px auto;
+    }
+
+    /* 
+    ::-webkit-scrollbar {
+    } */
+
+    .playlist-paragraph {
+        margin: 10px auto 5px auto;
+    }
+
+    .playlist-name {
+
+        color: white;
+        font-weight: 800;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .playlist-image {
+        margin: 0px auto 10px auto;
+        cursor: pointer;
+        border-width: 10px;
+        border-style: solid;
+        border-color: black;
+    }
+
+    .playlist-container {
+        text-align: center;
+        margin: 0 auto;
+    }
+
+    #playlist_retriever {
+        width: 200px;
+        height: 450px;
+        text-align: center;
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    #playlist_scroller {
+        height: 99%;
+        overflow-y: scroll;
+        background-color: white;
+        border-width: 10px;
+        border-color: white;
+    }
+
+    #flex_container {
+        margin-top: 50px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 5px;
+    }
+
+    #flex_container>div {
+        margin: 5px;
+    }
+
+    h1 {
+        font-weight: 600;
+        margin-top: 50px;
+    }
+
+    .playlist_analysis_text {
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+        margin-top: 50px;
+    }
+</style>
+
+<script src="https://d3js.org/d3.v3.min.js"></script>
+
+<body>
+        <nav class="navbar navbar-expand-lg navbar-light fixed-top py-3" id="mainNav">
+                <div class="container">
+                  <a class="navbar-brand js-scroll-trigger" href="#page-top">INSPIRE</a>
+                  <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                  </button>
+                  <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav ml-auto my-2 my-lg-0">
+                      <li class="nav-item">
+                        <a class="nav-link js-scroll-trigger" href="{{ url_for('homePage') }}">Home</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link js-scroll-trigger" href="{{ url_for('search_page') }}">Features</a>
+                      </li>
+            
+                      <li class="nav-item">
+                        <a class="nav-link js-scroll-trigger" href="https://cornelldata.science/">Cornell Data Science</a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </nav>
+
+    <h1>
+        Select a playlist to analyze its features
+    </h1>
+    <div id="flex_container">
+        <div id="playlist_retriever"></div>
+    </div>
+</body>
+
+<script>
+
+    // Called whenever you click on a playlist name
+    function playlistOnClick(playlist_id, playlist_name) {
+        playlistTrackRetriever(playlist_id, playlist_name);
+    }
+
+    function generateTrackViewForPlaylist(track_ids, playlist_name) {
+        console.log(document.getElementById("playlist_track_view"));
+        if (document.getElementById("playlist_track_view") != null) {
+            document.getElementById("playlist_track_view").remove();
+        }
+        var playlist_retriever_container = document.createElement("div");
+        playlist_retriever_container.id = "playlist_track_view";
+
+        console.log("generate track view for playlist", track_ids);
+        song_previews = []
+        var player_container = document.createElement("div");
+        player_container.className = "player-scrollbar-inner";
+        for (i = 0; i < track_ids.length; i++) {
+            let track_id = track_ids[i];
+            var iframe = document.createElement('iframe');
+            iframe.className = "playlist_iframe";
+            iframe.src = "https://open.spotify.com/embed/track/" + track_id;
+            iframe.width = "400";
+            iframe.height = "80";
+            iframe.frameBorder = "0";
+            iframe.allowtransparency = "true";
+            iframe.allow = "encrypted-media";
+            player_container.appendChild(iframe);
+        }
+        playlist_retriever_container.append(player_container);
+        var flex_container = document.getElementById("flex_container");
+        flex_container.appendChild(playlist_retriever_container);
+    }
+
+    function createPlaylistComponent(playlist) {
+        let playlist_component = document.createElement("div");
+        playlist_component.className = "playlist-container";
+
+        let playlist_image = document.createElement("img");
+        playlist_image.className = "playlist-image"
+        playlist_image.src = playlist.playlist_url;
+        playlist_image.width = 100;
+        playlist_image.height = 100;
+
+        let playlist_name_para = document.createElement("p");
+        playlist_name_para.className = "playlist-paragraph";
+        let playlist_name_text = document.createElement("a");
+
+        playlist_name_text.className = "playlist-name";
+        playlist_name_text.innerHTML = playlist.playlist_name;
+        playlist_name_para.appendChild(playlist_name_text);
+
+
+        playlist_image.onclick = function () { playlistOnClick(playlist.playlist_id, playlist.playlist_name); };
+        playlist_name_text.onclick = function () { playlistOnClick(playlist.playlist_id, playlist.playlist_name); };
+
+
+        playlist_component.appendChild(playlist_name_para);
+        playlist_component.appendChild(playlist_image);
+        return playlist_component;
+    }
+
+    function createPlaylistSelector(playlist_data) {
+        let playlist_selector_container = document.getElementById("playlist_retriever");
+
+        let playlist_selector_scroller = document.createElement("div");
+        playlist_selector_scroller.id = "playlist_scroller";
+        for (i = 0; i < playlist_data.length; i++) {
+
+            let playlist = playlist_data[i];
+            playlist_selector_scroller.appendChild(createPlaylistComponent(playlist));
+        }
+
+        playlist_selector_container.appendChild(playlist_selector_scroller);
+    }
+
+    (function playlistRetriever() {
+        $.ajax({
+            url: '/playlistRetriever',
+            contentType: "application/json",
+            type: 'POST',
+            success: function (response) {
+                response = JSON.parse(response);
+                console.log("playlist", response);
+                createPlaylistSelector(response);
+
+            },
+            error: function (error) {
+                console.log("ERROR IN PLAYLIST RETRIEVER")
+            }
+        });
+    })();
+
+    function displayPlaylistAnalysisText(text) {
+        var body = document.getElementsByTagName("body")[0];
+        var playlistAnalysisDiv = document.createElement("div");
+        playlistAnalysisDiv.className = "playlist_analysis_text";
+        playlistAnalysisDiv.innerHTML = text;
+        body.appendChild(playlistAnalysisDiv);
+    }
+
+
+    function generateAnalysisForPlaylist(playlist_track_ids) {
+        $.ajax({
+            url: '/playlistTrackAnalysis',
+            data: JSON.stringify({ 'playlist_id': playlist_track_ids }),
+            contentType: "application/json",
+            type: 'POST',
+            success: function (response) {
+                response = JSON.parse(response);
+                console.log(response.track_analysis);
+                displayPlaylistAnalysisText(response.track_analysis);
+            },
+            error: function (error) {
+                console.log("ERROR IN PLAYLIST TRACK analysis");
+            }
+        });
+    }
+
+    function playlistTrackRetriever(playlist_id, playlist_name) {
+        $.ajax({
+            url: '/playlistTrackRetriever',
+            data: JSON.stringify({ 'playlist_id': playlist_id }),
+            contentType: "application/json",
+            type: 'POST',
+            success: function (response) {
+                response = JSON.parse(response);
+                console.log(response);
+
+                generateTrackViewForPlaylist(response.playlist_track_ids, playlist_name);
+                console.log("generating analysis for playlists");
+                generateAnalysisForPlaylist(response.playlist_track_ids);
+                console.log("finished generating analysis");
+
+            },
+            error: function (error) {
+                console.log("ERROR IN PLAYLIST TRACK RETRIEVER");
+            }
+        });
+    }
+</script>
+
+{% endblock %}

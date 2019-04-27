@@ -15,7 +15,7 @@
 #search-bar-container {
   width: 700px !important;
   margin: 0 auto !important;
-  margin-top: 400px;
+  margin-top: 400px !important;
   display: table;
 }
 
